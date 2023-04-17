@@ -14,8 +14,8 @@ tela = pygame.display.set_mode((largura,altura))
 background = pygame.image.load("Esgoto/sewer.png").convert_alpha()
 background = pygame.transform.scale(background, (largura,altura))
 
-FPS = 100
-PLAYER_VEL = 1
+FPS = 50
+PLAYER_VEL = 1 
 def virar(sprites):
     return[pygame.transform.flip(sprite,True,False) for sprite in sprites]
 #BAIXAR AS IMAGENS DO SPRITE
@@ -47,7 +47,7 @@ def baixar_sprite(dir1,width,height,direction = False):
 class Jogador(pygame.sprite.Sprite):
     GRAVITY = 0.1
     SPRITES = baixar_sprite("personagem",48,50, True)
-    ANIMATION_DELAY = 60
+    ANIMATION_DELAY = 100
 
     def __init__(self, x, y, width, height):
         self.rect = pygame.Rect(x,y,width,height)
@@ -88,10 +88,18 @@ class Jogador(pygame.sprite.Sprite):
       sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
       self.sprite = sprites[sprite_index]
       self.animation_count += 1
+      self.update()
+
+    def update(self):
+        self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
+        self.mask = pygame.mask.from_surface(self.sprite)
 
     
     def draw(self,tela):
         tela.blit(self.sprite, (self.rect.x,self.rect.y))
+
+
+
 
 player = Jogador(100,100,80,80)#tamanhos do personagem(Lucas)
 
