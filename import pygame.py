@@ -12,7 +12,7 @@ margem = 100
 #side
 margem_lado = 300
 
-tela = pygame.display.set_mode((largura, altura + margem))
+tela = pygame.display.set_mode((largura, altura +margem))
 pygame.display.set_caption('Após a enchente')
 
 
@@ -28,15 +28,13 @@ tamanho = altura // rows
 level = 0 
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 6
+tipo = 5
 current_tile = 0
 
 
 #ADD AS IMAGES
 background = pygame.image.load('sewer.png').convert_alpha()
 background = pygame.transform.scale(background, (largura,altura))
-
-
 
 img_lista = []
 for x in range(tipo):
@@ -45,11 +43,17 @@ for x in range(tipo):
     img = pygame.transform.scale(img, (tamanho, tamanho))
     img_lista.append(img)
 
+save_img = pygame.image.load('4.png').convert_alpha()
+load_img = pygame.image.load('5.png').convert_alpha()
+
+
 #DEFINIR CORES 
 BLACK = (0, 0, 0)
 WHITE = (250, 250, 250)
 GREEN = (144, 201, 120)
 
+
+font = pygame.font.SysFont('Futura', 30)
 #CRIAR LISTA COM OS ESPAÇOS VAZIOS
 #World data
 lista = []
@@ -64,8 +68,12 @@ for tile in range(0, colunas_max):
 for tile in range(0, colunas_max):
     lista[rows - 1][tile] = 1 ##número da foto
 
-#FUNÇÃO PARA AS IMAGENS 
+#TEXTO PARA MOSTRAR LEVEL
+def draw_text(text, font, text_col, x, y):
+	img = font.render(text, True, text_col)
+	tela.blit(img, (x, y))
 
+#FUNÇÃO PARA AS IMAGENS 
 def imagens():
     tela.fill(WHITE)
     width = tela.get_width()
@@ -92,6 +100,8 @@ def desenhar_mundo():
 
 
 #CRIAR OS BOTÕES DAS IMAGENS
+save_button = button.Button(largura // 2 + margem_lado, altura + margem - 50, save_img, 1)
+load_button = button.Button(largura // 2 + 200, altura + margem - 50, load_img, 1)
 botao_lista = []
 #col
 botao1 = 0 
@@ -113,13 +123,27 @@ while rodando == True:
     matrizes()
     desenhar_mundo()
 
+    #SALVAR OS DESENHOS 
+    if save_button.draw(tela):
+        with open(f'level{level}_data.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter = ',')
+            for row in lista:
+                writer.writerow(row)
 
+    #RECUPERAR O DESENHO AO ABRIR O JOGO
+    if load_button.draw(tela):
+            scroll = 0
+            with open(f'level{level}_data.csv', newline='') as csvfile:
+                reader = csv.reader(csvfile, delimiter = ',')
+                for x, row in enumerate(reader):
+                    for y, tile in enumerate(row):
+                        lista[x][y] = int(tile)
 
     #painel/invetário 
     pygame.draw.rect(tela, WHITE, (altura, 0, margem_lado, largura))
     contador_botao = 0
     for contador_botao, i in enumerate(botao_lista): 
-       if i.draw(tela):
+        if i.draw(tela):
             current_tile = contador_botao
 
     #marca que fica sobre as imagens dentro do inventário 
@@ -158,9 +182,6 @@ while rodando == True:
             if event.key == pygame.K_LEFT:
                 esquerda = False
             if event.key == pygame.K_RIGHT:
-                direita = False
-        if event.type == pygame.KEYDOWN:
-            if  event.key == pygame.K_s:
                 direita = False
     
     pygame.display.update()
