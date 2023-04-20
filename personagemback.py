@@ -14,7 +14,7 @@ margem = 100
 #side
 margem_lado = 300
 
-tela = pygame.display.set_mode((largura, altura +margem))
+tela = pygame.display.set_mode((largura, altura + margem))
 pygame.display.set_caption('Após a enchente')
 
 ################### LUCAS ###############################
@@ -22,8 +22,8 @@ FPS = 50
 PLAYER_VEL = 1 
 def virar(sprites):
     return[pygame.transform.flip(sprite,True,False) for sprite in sprites]
-#BAIXAR AS IMAGENS DO SPRITE
 
+#BAIXAR AS IMAGENS DO SPRITE E TODAS AS IMAGENS DE DIREITA PARA ESQUERDA E VICE E VERSA
 def baixar_sprite(dir1,width,height,direction = False):
     path = join(dir1)
     images = [f for f in listdir(path) if isfile(join(path,f))]
@@ -51,7 +51,7 @@ class Jogador(pygame.sprite.Sprite):
     GRAVITY = 0.1
     SPRITES = baixar_sprite("personagem",48,50, True)
     ANIMATION_DELAY = 40
-
+    #INICIO DAS VARIAVEIS PRINCIPAIS
     def __init__(self, x, y, width, height):
         self.rect = pygame.Rect(x,y,width,height)
         self.x_vel = 0
@@ -77,9 +77,10 @@ class Jogador(pygame.sprite.Sprite):
           self.direction = "direita"
           self.animation_count = 0
     def loop(self, fps):
-        #self.y_vel += min(0.1, (self.fall_count/fps) * self.GRAVITY)
+        self.y_vel += min(0.1, (self.fall_count/fps) * self.GRAVITY)
         self.move(self.x_vel,self.y_vel)
-        self.fall_count += 0.1
+        self.checar_chao(self.y_vel)
+        self.fall_count += 0.3
         self.update_sprite()
     
     def update_sprite(self):
@@ -97,27 +98,26 @@ class Jogador(pygame.sprite.Sprite):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite)
 
-    
     def draw(self,tela):
         tela.blit(self.sprite, (self.rect.x,self.rect.y))
-
-
-
+    
+    def checar_chao(self,dy):
+        if self.rect.bottom + dy > 563:
+            self.y_vel =  0
 
 player = Jogador(100,100,80,80)#tamanhos do personagem(Lucas)
 
 def movimento(player):
     keys = pygame.key.get_pressed()
-
     player.x_vel = 0
     if keys[pygame.K_LEFT]:
-        player.mover_esquerda(float(PLAYER_VEL))
+        player.mover_esquerda(PLAYER_VEL)
     if keys[pygame.K_RIGHT]:
-        player.mover_direita(float(PLAYER_VEL))
+        player.mover_direita(PLAYER_VEL)
+    
 
 
-
-############### FABY #################################
+############### FABY ####################
 #variaveis scrool
 esquerda = False
 direita = False
@@ -130,12 +130,12 @@ tamanho = altura // rows
 level = 0 
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 5
+tipo = 7
 current_tile = 0
 
 
 #ADD AS IMAGES
-background = pygame.image.load('sewer.png').convert_alpha()
+background = pygame.image.load('Esgoto/sewer.png').convert_alpha()
 background = pygame.transform.scale(background, (largura,altura))
 
 img_lista = []
@@ -248,10 +248,11 @@ while rodando == True:
 
     #marca que fica sobre as imagens dentro do inventário 
     pygame.draw.rect(tela, GREEN, botao_lista[current_tile].rect, 3)
-
-    if esquerda == True and scroll > 0:
+    
+    #MAXIMO DE LARGURA DA TELA
+    if esquerda == True and scroll > 0: 
         scroll -= 5 * scroll_speed
-    if direita == True and scroll < (colunas_max * tamanho) - largura: #PARA A LARGURA DO 
+    if direita == True and scroll < (colunas_max * tamanho) - largura: #PARA PARAR A LARGURA NA DIREITA
         scroll += 5 * scroll_speed
     
     #FAZER O MOUSE PUXAR A IMAGEM PARA POR NA GRADE
