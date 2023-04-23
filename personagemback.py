@@ -18,7 +18,7 @@ tela = pygame.display.set_mode((largura, altura + margem))
 pygame.display.set_caption('Após a enchente')
 
 ################### LUCAS ###############################
-FPS = 50
+FPS = 20
 PLAYER_VEL = 1 
 def virar(sprites):
     return[pygame.transform.flip(sprite,True,False) for sprite in sprites]
@@ -60,6 +60,7 @@ class Jogador(pygame.sprite.Sprite):
         self.direction = "esquerda"
         self.animation_count = 0
         self.fall_count = 0
+        self.jump_count = 0
     
     def move(self,dx,dy):
         self.rect.x += dx
@@ -76,8 +77,13 @@ class Jogador(pygame.sprite.Sprite):
         if self.direction != "direita":
           self.direction = "direita"
           self.animation_count = 0
+    def jump(self):
+        if self.jump_count == 0:
+          self.y_vel = -self.GRAVITY * 65
+          self.jump_count = 1
+    
     def loop(self, fps):
-        self.y_vel += min(0.1, (self.fall_count/fps) * self.GRAVITY)
+        self.y_vel += min(0.1, (self.fall_count/2*fps) * self.GRAVITY)
         self.move(self.x_vel,self.y_vel)
         self.checar_chao(self.y_vel)
         self.fall_count += 0.3
@@ -104,6 +110,7 @@ class Jogador(pygame.sprite.Sprite):
     def checar_chao(self,dy):
         if self.rect.bottom + dy > 563:
             self.y_vel =  0
+            self.jump_count = 0
 
 player = Jogador(100,100,80,80)#tamanhos do personagem(Lucas)
 
@@ -122,7 +129,7 @@ def movimento(player):
 esquerda = False
 direita = False
 scroll = 0 
-scroll_speed = 1
+scroll_speed = 0.6
 #variaveis matriz
 rows = 16
 colunas_max = 150
@@ -279,16 +286,24 @@ while rodando == True:
                 esquerda = True
             if event.key == pygame.K_RIGHT:
                 direita = True
+            if event.key == pygame.K_SPACE and player.jump_count < 2: #pulo do personagem
+              player.jump()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 esquerda = False
             if event.key == pygame.K_RIGHT:
                 direita = False
+
     
      # parte do personagem carreagndo na tela(Lucas)
     player.loop(FPS) 
     movimento(player)
     player.draw(tela) 
     pygame.display.update()
+    
+    #MOVIMENTO DO PULO PERSONAGEM
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_SPACE and player.jump_count < 2:
+            player.jump()
 
 pygame.quit()
