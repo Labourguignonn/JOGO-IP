@@ -18,8 +18,8 @@ tela = pygame.display.set_mode((largura, altura + margem))
 pygame.display.set_caption('Após a enchente')
 
 ################### LUCAS ###############################
-FPS = 20
-PLAYER_VEL = 1 
+FPS = 30
+PLAYER_VEL = 1
 def virar(sprites):
     return[pygame.transform.flip(sprite,True,False) for sprite in sprites]
 
@@ -36,7 +36,7 @@ def baixar_sprite(dir1,width,height,direction = False):
             surface = pygame.Surface((width,height), pygame.SRCALPHA, 32)
             rect = pygame.Rect(i * width, 0, width, height)
             surface.blit(sprite_sheet, (0,0), rect)
-            sprites.append(pygame.transform.scale(surface,(100,140)))#TAMANHO DO PERSONAGEM PRINCIPAL(LUCAS)
+            sprites.append(pygame.transform.scale(surface,(100,120)))#TAMANHO DO PERSONAGEM PRINCIPAL(LUCAS)
         
         if direction:
             all_sprites[image.replace(".png", "") + "_direita"] = sprites
@@ -79,11 +79,11 @@ class Jogador(pygame.sprite.Sprite):
           self.animation_count = 0
     def jump(self):
         if self.jump_count == 0:
-          self.y_vel = -self.GRAVITY * 65
+          self.y_vel = -self.GRAVITY * 42
           self.jump_count = 1
     
     def loop(self, fps):
-        self.y_vel += min(0.1, (self.fall_count/2*fps) * self.GRAVITY)
+        self.y_vel += min(0.05, (self.fall_count/6*fps) * self.GRAVITY)
         self.move(self.x_vel,self.y_vel)
         self.checar_chao(self.y_vel)
         self.fall_count += 0.3
@@ -129,7 +129,7 @@ def movimento(player):
 esquerda = False
 direita = False
 scroll = 0 
-scroll_speed = 0.6
+scroll_speed = 1
 #variaveis matriz
 rows = 16
 colunas_max = 150
@@ -185,7 +185,7 @@ def imagens():
     width = tela.get_width()
     #quantas vezes a imagem repete 
     for x in range(4):
-        tela.blit(background,((x*width) - scroll * 0.2,0)) ##0.7 == velocidade que move a tela
+        tela.blit(background,((x*width) - scroll * 0.09,0)) ##0.7 == velocidade que move a tela
 
 #FUNÇÃO MATRIZES
 def matrizes():
