@@ -46,11 +46,11 @@ def baixar_sprite(dir1,width,height,direction = False):
     return all_sprites
 
 
-#CLASSE QLQR PERSONAGEM
+#CLASSE PERSONAGEM PRINCIPAL
 class Jogador(pygame.sprite.Sprite):
     GRAVITY = 0.1
     SPRITES = baixar_sprite("personagem",48,50, True)
-    ANIMATION_DELAY = 40
+    ANIMATION_DELAY = 50
     #INICIO DAS VARIAVEIS PRINCIPAIS
     def __init__(self, x, y, width, height):
         self.rect = pygame.Rect(x,y,width,height)
@@ -61,27 +61,30 @@ class Jogador(pygame.sprite.Sprite):
         self.animation_count = 0
         self.fall_count = 0
         self.jump_count = 0
-    
+        self.ataque = False
+        
+    #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
     def move(self,dx,dy):
         self.rect.x += dx
         self.rect.y += dy
-    
+    #DEFINIR A DIRECAO DA ANDADA PRA ESQUERDA E CHAMAR AS SPRITES DA ESQUERDA
     def mover_esquerda(self,vel):
       self.x_vel = -vel
       if self.direction != "esquerda":
         self.direction = "esquerda"
         self.animation_count = 0
-    
+    #DEFINIR A DIRECAO DA ANDADA PRA ESQUERDA E CHAMAR AS SPRITES DA ESQUERDA
     def mover_direita(self,vel):
         self.x_vel = vel
         if self.direction != "direita":
           self.direction = "direita"
           self.animation_count = 0
+    #FUNCAO DE PULAR
     def jump(self):
         if self.jump_count == 0:
           self.y_vel = -self.GRAVITY * 42
           self.jump_count = 1
-    
+    #FUNCAO QUE VAI VERIFICAR O QUE O PERSONAGEM FAZ A CADA FRAME
     def loop(self, fps):
         self.y_vel += min(0.05, (self.fall_count/6*fps) * self.GRAVITY)
         self.move(self.x_vel,self.y_vel)
@@ -98,12 +101,23 @@ class Jogador(pygame.sprite.Sprite):
       sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
       self.sprite = sprites[sprite_index]
       self.animation_count += 1
+      if self.ataque == True:
+        self.ataque = False
+        sprite_sheet = "Attack"
+        sprite_sheet_name = sprite_sheet + "_" + self.direction
+        sprites = self.SPRITES[sprite_sheet_name]
+        sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
+        self.sprite = sprites[sprite_index]
+        self.animation_count += 1
       self.update()
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite)
-
+    def atacar(self):
+      if self.ataque == False:
+        self.ataque = True
+        
     def draw(self,tela):
         tela.blit(self.sprite, (self.rect.x,self.rect.y))
     
@@ -121,6 +135,7 @@ def movimento(player):
         player.mover_esquerda(PLAYER_VEL)
     if keys[pygame.K_RIGHT]:
         player.mover_direita(PLAYER_VEL)
+
     
 
 
@@ -286,8 +301,10 @@ while rodando == True:
                 esquerda = True
             if event.key == pygame.K_RIGHT:
                 direita = True
-            if event.key == pygame.K_SPACE and player.jump_count < 2: #pulo do personagem
+            if event.key == pygame.K_UP and player.jump_count < 2: #pulo do personagem
               player.jump()
+            if event.key == pygame.K_SPACE:
+              player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 esquerda = False
@@ -301,9 +318,4 @@ while rodando == True:
     player.draw(tela) 
     pygame.display.update()
     
-    #MOVIMENTO DO PULO PERSONAGEM
-    if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_SPACE and player.jump_count < 2:
-            player.jump()
-
 pygame.quit()
