@@ -66,6 +66,7 @@ class Jogador(pygame.sprite.Sprite):
         #mudanca 
         self.virar = 'esquerda'
         #####
+        self.attack_animation_count = 0
         self.animation_count = 0
         self.fall_count = True
         self.jump_count = False
@@ -103,25 +104,27 @@ class Jogador(pygame.sprite.Sprite):
         self.checar_chao(self.y_vel)
         self.fall_count += 0.3
         self.update_sprite()
-    
+
     def update_sprite(self):
-        sprite_sheet = "Idle"
-        if self.x_vel != 0:
-            sprite_sheet = "Walk"
-        sprite_sheet_name = sprite_sheet + "_" + self.virar
-        sprites = self.SPRITES[sprite_sheet_name]
-        sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
-        self.sprite = sprites[sprite_index]
-        self.animation_count += 1
-        if self.ataque == True:
-            self.ataque = False
-            sprite_sheet = "Attack"
-            #self.ANIMATION_DELAY = 150
-        sprite_sheet_name = sprite_sheet + "_" + self.virar
-        sprites = self.SPRITES[sprite_sheet_name]
-        sprite_index = (self.animation_count) // self.ANIMATION_DELAY % len(sprites)
-        self.sprite = sprites[sprite_index]
-        self.animation_count += 1
+        if self.ataque:
+            sprite_sheet_name = "Attack" + "_" + self.virar
+            sprites = self.SPRITES[sprite_sheet_name]
+            sprite_index = (self.attack_animation_count // self.ANIMATION_DELAY) % len(sprites)
+            self.sprite = sprites[sprite_index]
+            self.attack_animation_count += 1
+            if self.attack_animation_count >= len(sprites) * self.ANIMATION_DELAY:
+                self.ataque = False
+                self.attack_animation_count = 0
+        else:
+            sprite_sheet = "Idle"
+            if self.x_vel != 0:
+                sprite_sheet = "Walk"
+            sprite_sheet_name = sprite_sheet + "_" + self.virar
+            sprites = self.SPRITES[sprite_sheet_name]
+            sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
+            self.sprite = sprites[sprite_index]
+            self.animation_count += 1
+
         self.update()
 
     def update(self):
