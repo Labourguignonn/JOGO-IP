@@ -23,7 +23,6 @@ pygame.display.set_caption('Após a enchente')
 
 ################### LUCAS ###############################
 FPS = 30
-PLAYER_VEL = 1
 
 player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
 
@@ -44,17 +43,6 @@ player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
             if tile == 15:#create player
                player = Jogador('player',100,100,80,80)
 """""
-
-
-def movimento(self):
-    keys = pygame.key.get_pressed()
-    player.x_vel = 0
-    if keys[pygame.K_LEFT]:
-        player.mover_esquerda(PLAYER_VEL)
-    if keys[pygame.K_RIGHT]:
-        player.mover_direita(PLAYER_VEL)
-
-    
 
 
 ############### FABY ####################
@@ -232,7 +220,7 @@ while rodando == True:
     
      # parte do personagem carreagndo na tela(Lucas)
     player.loop(FPS) 
-    movimento(player)
+    player.movimento()
     player.draw(tela) 
     pygame.display.update()
     

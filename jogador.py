@@ -11,7 +11,7 @@ altura = 640
 margem = 100
 #side
 margem_lado = 300
-
+PLAYER_VEL = 1
 
 tela = pygame.display.set_mode((largura, altura + margem))
 
@@ -107,3 +107,11 @@ class Jogador(pygame.sprite.Sprite):
         if self.rect.bottom + dy > 563:
             self.y_vel =  0
             self.jump_count = False
+    
+    def movimento(self):
+        keys = pygame.key.get_pressed()
+        self.x_vel = 0
+        if keys[pygame.K_LEFT]:
+            self.mover_esquerda(PLAYER_VEL)
+        if keys[pygame.K_RIGHT]:
+            self.mover_direita(PLAYER_VEL)
