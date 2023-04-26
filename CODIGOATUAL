@@ -144,7 +144,7 @@ class Jogador(pygame.sprite.Sprite):
 
 player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
 
-"""class World():
+"""""class World():
     def process_data(self, data):
         self.level_length = len(data[0])
         for y, row in enumerate(lista):
@@ -152,12 +152,15 @@ player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
                 if tile >= 0:
                     img = img_lista[tile]
                     img_rect = img.get_rect()
-                    img_rect.x = x * TILE_SIZE
-                    img_rect.y = y * TILE_SIZE
+                    img_rect.x = x * tamanho
+                    img_rect.y = y * tamanho
                     tile_data = (img, img_rect)
-            elif tile == 15:#create player
-                            player = Jogador('player', x * tamanho, y * tamanho 1.65, 5, 20, 5)
-"""
+            if tile >= 3 and tile <= 4:
+				water = Water(img, x * tamanho, y * tamanho)
+				water_group.add(water)
+            if tile == 15:#create player
+               player = Jogador('player',100,100,80,80)
+"""""
 
 
 def movimento(self):
@@ -182,10 +185,10 @@ rows = 16
 colunas_max = 150
 #######TILE SIZE###############
 tamanho = altura // rows
-level = 0 
+level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 7
+tipo = 6
 current_tile = 0
 
 
