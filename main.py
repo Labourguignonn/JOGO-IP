@@ -4,8 +4,6 @@ import csv
 from os import listdir
 from os.path import isfile,join
 from jogador import Jogador
-from world import World
-
 
 pygame.init()
 ############### FABY #############################
@@ -26,15 +24,12 @@ pygame.display.set_caption('Após a enchente')
 ################### LUCAS ###############################
 FPS = 30
 
-player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
-
-
 ############### FABY ####################
 #variaveis scrool
 esquerda = False
 direita = False
-scroll = 4
-scroll_speed = 1
+scroll = 0
+bg_scroll = 0
 #variaveis matriz
 rows = 16
 colunas_max = 150
@@ -43,7 +38,7 @@ tamanho = altura // rows
 level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 8
+tipo = 7
 current_tile = 0
 
 
@@ -58,9 +53,6 @@ for x in range(tipo):
     img = pygame.transform.scale(img, (tamanho, tamanho))
     img_lista.append(img)
 
-save_img = pygame.image.load('4.png').convert_alpha()
-load_img = pygame.image.load('5.png').convert_alpha()
-
 
 #DEFINIR CORES 
 BLACK = (0, 0, 0)
@@ -70,89 +62,62 @@ GREEN = (144, 201, 120)
 
 font = pygame.font.SysFont('Futura', 30)
 
-#CRIAR OS BOTÕES DAS IMAGENS
-save_button = button.Button(largura // 2 + margem_lado, altura + margem - 50, save_img, 1)
-load_button = button.Button(largura // 2 + 200, altura + margem - 50, load_img, 1)
-botao_lista = []
-#col
-botao1 = 0 
-#row
-botao2 = 0
+def imagens():
+    tela.fill(WHITE)
+    width = tela.get_width()
+    #quantas vezes a imagem repete 
+    for x in range(4):
+        tela.blit(background,((x*width) - bg_scroll*0.7, 0)) ##0.7 == velocidade que move a tela
 
-for i in range(len(img_lista)):
-    ideia_botao = button.Button(altura + (75 *botao1) + 50, 75 * botao2 + 50, img_lista[i], 1)
-    botao_lista.append(ideia_botao)
-    botao1 += 1
-    if botao1 == 3:
-        botao2 += 1
-        botao1 = 0
+class World():
+    def __init__(self):
+        self.lista_obstaculos = []
+    def process_data(self, data):
+        for y, row in enumerate(data):
+            for x, tile in enumerate(row):
+                if tile >= 0:
+                    img = img_lista[tile]
+                    img_rect = img.get_rect()
+                    img_rect.x = x * tamanho
+                    img_rect.y = y * tamanho
+                    tile_data = (img, img_rect)
+                    if tile == 0 or tile == 2 or tile == 4 or tile == 5 or tile == 1:
+                        self.lista_obstaculos.append(tile_data)
+                    if tile == 3: 
+                        pass #agua 
+                    else:
+                        player = Jogador('player', x * tamanho, y * tamanho, 1.65, 5)#tamanhos do personagem(Lucas)
 
+        return player
+    def draw(self):
+        for tile in self.lista_obstaculos:
+            tile[1][0] -= scroll
+            tela.blit(tile[0], tile[1])
+#World data
 lista = []
 for row in range(rows):
     r = [-1]*colunas_max
     lista.append(r)
+#load in level data and create world
 with open(f'level{level}_data.csv', newline='') as csvfile:
 	reader = csv.reader(csvfile, delimiter=',')
 	for x, row in enumerate(reader):
 		for y, tile in enumerate(row):
 			lista[x][y] = int(tile)
 world = World()
-player = world.process_data(lista)
-
+player =  world.process_data(lista)
 
 rodando = True
 while rodando == True:
-      
+    imagens()
     world.draw()
-
-
-    #SALVAR OS DESENHOS 
-    if save_button.draw(tela):
-        with open(f'level{level}_data.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter = ',')
-            for row in lista:
-                writer.writerow(row)
-
-    #RECUPERAR O DESENHO AO ABRIR O JOGO
-    if load_button.draw(tela):
-            scroll = 0
-            with open(f'level{level}_data.csv', newline='') as csvfile:
-                reader = csv.reader(csvfile, delimiter = ',')
-                for x, row in enumerate(reader):
-                    for y, tile in enumerate(row):
-                        lista[x][y] = int(tile)
-
-    #painel/invetário 
-    pygame.draw.rect(tela, WHITE, (altura, 0, margem_lado, largura))
-    contador_botao = 0
-    for contador_botao, i in enumerate(botao_lista): 
-        if i.draw(tela):
-            current_tile = contador_botao
-
-    #marca que fica sobre as imagens dentro do inventário 
-    pygame.draw.rect(tela, GREEN, botao_lista[current_tile].rect, 3)
     
-    #MAXIMO DE LARGURA DA TELA
-    if esquerda == True and scroll > 0: 
-        scroll -= 5 * scroll_speed
-    if direita == True and scroll < (colunas_max * tamanho) - largura: #PARA PARAR A LARGURA NA DIREITA
-        scroll += 5 * scroll_speed
-    
-    #FAZER O MOUSE PUXAR A IMAGEM PARA POR NA GRADE
-    posicao = pygame.mouse.get_pos()
-    x = (posicao[0] + scroll) // tamanho
-    y = posicao[1] // tamanho
 
-    #VER SE O CLIQUE ESTÁ SENDO NA ALTURA E LARGURA DO JOGO 
-    if posicao[0] < largura and posicao[1] < altura:
-        if pygame.mouse.get_pressed()[0] == 1:
-            if lista[y][x] != current_tile:
-                lista[y][x] = current_tile
-        #CLICAR COM O BOTÃO DIREITO E APAGA O QUE FOI FEITO
-        if pygame.mouse.get_pressed()[2] == 1:
-             lista[y][x] = -1
+    #water_group.update()
+    #water_group.draw(screen)
     
-    #MOVER A TELA 
+
+        #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             rodando = False 
@@ -163,20 +128,29 @@ while rodando == True:
             if event.key == pygame.K_RIGHT:
                 direita = True
             if event.key == pygame.K_UP: #pulo do personagem
-               player.jump()
+                player.jump()
             if event.key == pygame.K_SPACE:
-              player.atacar()
+                player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 esquerda = False
             if event.key == pygame.K_RIGHT:
                 direita = False
 
-    
-     # parte do personagem carreagndo na tela(Lucas)
+    # impede que a tela role para fora dos limites definidos
+    if scroll < 0:
+        scroll = 0
+    if scroll > largura - margem_lado:
+        scroll = largura - margem_lado
+
+    # parte do personagem carreagndo na tela(Lucas)
     player.loop(FPS) 
     player.movimento()
+    player.update()
     player.draw(tela) 
     pygame.display.update()
+
+
+
     
 pygame.quit()
