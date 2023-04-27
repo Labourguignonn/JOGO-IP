@@ -16,7 +16,7 @@ margem = 100
 margem_lado = 300
 
 
-tela = pygame.display.set_mode((largura, altura + margem))
+tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
 #######
@@ -100,7 +100,7 @@ class World():
                         water_group.add(water)
                     if tile == 7 or tile == 8:
                         pass #inimigos
-                    else:
+                    if tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho, 100, 120)#tamanhos do personagem(Lucas)
 
         return player
@@ -146,17 +146,17 @@ class Jogador(pygame.sprite.Sprite):
         if self.char_type == 'player':
             if self.rect.left + dx < -50 or self.rect.right + dx > largura + 50:
                 dx = 0
-        self.rect.x += dx
-        self.rect.y += dy
-
+        scroll = 0
         #update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura)\
                 or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
                 self.rect.x -= dx
-                screen_scroll = -dx
+                scroll = -dx
+        self.rect.x += dx
+        self.rect.y += dy
 
-        return screen_scroll
+        return scroll
 
 
     def mover_esquerda(self, vel):
@@ -272,7 +272,7 @@ while rodando == True:
 
     water_group.update()
     water_group.draw(tela)
-    
+
 
         #MOVER A TELA 
     for event in pygame.event.get():

@@ -2,23 +2,17 @@ import pygame
 from os import listdir
 from os.path import isfile,join
 from funçoes import *
-from main import World
+
 pygame.init()
 #GAME WINDOW
 largura = 1500
 altura = 640
 #lower
 margem = 100
-
-rows = 16
 #side
-tamanho = altura // rows
 margem_lado = 300
 PLAYER_VEL = 1
-SCROLL_THRESH = 200
 
-bg_scroll = 0
-screen_scroll = 0
 tela = pygame.display.set_mode((largura, altura + margem))
 
 #CLASSE PERSONAGEM PRINCIPAL
@@ -52,13 +46,6 @@ class Jogador(pygame.sprite.Sprite):
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
-        if self.char_type == 'player':
-            if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (World.level_length * tamanho) - largura)\
-                or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
-                self.rect.x -= dx
-                screen_scroll = -dx
-        return screen_scroll
-        
     def mover_esquerda(self, vel):
         self.x_vel = -vel
         if self.virar != 'esquerda':
