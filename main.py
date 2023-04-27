@@ -4,6 +4,7 @@ import csv
 from os import listdir
 from os.path import isfile,join
 from jogador import Jogador
+from new_enemies import Inimigos
 
 pygame.init()
 ############### FABY #############################
@@ -15,11 +16,8 @@ margem = 100
 #side
 margem_lado = 300
 
-
 tela = pygame.display.set_mode((largura, altura + margem))
 pygame.display.set_caption('Após a enchente')
-
-#######
 
 ################### LUCAS ###############################
 FPS = 30
@@ -143,6 +141,12 @@ for i in range(len(img_lista)):
         botao2 += 1
         botao1 = 0
 
+
+#### BRUNA ####
+inimigos = pygame.sprite.Group()
+rato = Inimigos()
+inimigos.add(rato)
+
 rodando = True
 while rodando == True:
 
@@ -223,5 +227,10 @@ while rodando == True:
     player.movimento()
     player.draw(tela) 
     pygame.display.update()
+    
+    #####carregar inimigos#####
+    inimigos.draw(tela)
+    inimigos.update()
+    pygame.display.flip()
     
 pygame.quit()
