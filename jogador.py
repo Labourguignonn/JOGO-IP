@@ -2,18 +2,23 @@ import pygame
 from os import listdir
 from os.path import isfile,join
 from funçoes import *
-from world import World
-
+from main import World
 pygame.init()
 #GAME WINDOW
 largura = 1500
 altura = 640
 #lower
 margem = 100
+
+rows = 16
 #side
+tamanho = altura // rows
 margem_lado = 300
 PLAYER_VEL = 1
+SCROLL_THRESH = 200
 
+bg_scroll = 0
+screen_scroll = 0
 tela = pygame.display.set_mode((largura, altura + margem))
 
 #CLASSE PERSONAGEM PRINCIPAL
@@ -47,22 +52,13 @@ class Jogador(pygame.sprite.Sprite):
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
-        for tile in World.obstacle_list:
-            #check collision in the x direction
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0
-            #check for collision in the y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                #check if below the ground, i.e. jumping
-                if self.vel_y < 0:
-                    self.vel_y = 0
-                    dy = tile[2].bottom - self.rect.top
-                #check if above the ground, i.e. falling
-                elif self.vel_y >= 0:
-                    self.vel_y = 0
-                    self.in_air = False
-                    dy = tile[5].top - self.rect.bottom
-
+        if self.char_type == 'player':
+            if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (World.level_length * tamanho) - largura)\
+                or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
+                self.rect.x -= dx
+                screen_scroll = -dx
+        return screen_scroll
+        
     def mover_esquerda(self, vel):
         self.x_vel = -vel
         if self.virar != 'esquerda':
@@ -113,10 +109,6 @@ class Jogador(pygame.sprite.Sprite):
     def update(self):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite)
-        #check for collision with level
-        for tile in World.obstacle_list:
-            if tile[1].colliderect(self.rect):
-                self.kill()
     def atacar(self):
       if self.ataque == False:
         self.ataque = True 
