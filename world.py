@@ -101,7 +101,7 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     else:
-                        player = Jogador('player', x * tamanho, y * tamanho, 1.65, 5)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho, 100, 120)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
@@ -130,13 +130,15 @@ class Jogador(pygame.sprite.Sprite):
         self.fall_count = True
         self.jump_count = False
         self.ataque = False
+        self.width = width
+        self.height = height
         
     #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
     def move(self, dx, dy):
         #check for collision
         for tile in world.lista_obstaculos:
             #check collision in the x direction
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, 100, 120):
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
