@@ -84,6 +84,7 @@ class World():
     def __init__(self):
         self.lista_obstaculos = []
     def process_data(self, data):
+        self.level_length = len(data[0])
         for y, row in enumerate(data):
             for x, tile in enumerate(row):
                 if tile >= 0:
@@ -135,7 +136,7 @@ class Jogador(pygame.sprite.Sprite):
         #check for collision
         for tile in world.lista_obstaculos:
             #check collision in the x direction
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, 100, 120):
                 dx = 0
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
