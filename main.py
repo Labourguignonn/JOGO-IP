@@ -4,6 +4,8 @@ import csv
 from os import listdir
 from os.path import isfile,join
 from jogador import Jogador
+from world import World
+
 
 pygame.init()
 ############### FABY #############################
@@ -26,24 +28,6 @@ FPS = 30
 
 player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
 
-"""""class World():
-    def process_data(self, data):
-        self.level_length = len(data[0])
-        for y, row in enumerate(lista):
-            for x, tile in enumerate(row):
-                if tile >= 0:
-                    img = img_lista[tile]
-                    img_rect = img.get_rect()
-                    img_rect.x = x * tamanho
-                    img_rect.y = y * tamanho
-                    tile_data = (img, img_rect)
-            if tile >= 3 and tile <= 4:
-				water = Water(img, x * tamanho, y * tamanho)
-				water_group.add(water)
-            if tile == 15:#create player
-               player = Jogador('player',100,100,80,80)
-"""""
-
 
 ############### FABY ####################
 #variaveis scrool
@@ -59,7 +43,7 @@ tamanho = altura // rows
 level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 6
+tipo = 8
 current_tile = 0
 
 
@@ -85,46 +69,6 @@ GREEN = (144, 201, 120)
 
 
 font = pygame.font.SysFont('Futura', 30)
-#CRIAR LISTA COM OS ESPAÇOS VAZIOS
-#World data
-lista = []
-for row in range(rows):
-    r = [-1]*colunas_max
-    lista.append(r)
-
-#CRIAR CHÃO
-for tile in range(0, colunas_max):
-    lista[rows - 2][tile] = 0 ##número da foto
-
-for tile in range(0, colunas_max):
-    lista[rows - 1][tile] = 1 ##número da foto
-
-
-def imagens():
-    tela.fill(WHITE)
-    width = tela.get_width()
-    #quantas vezes a imagem repete 
-    for x in range(4):
-        tela.blit(background,((x*width) - scroll*0.7, 0)) ##0.7 == velocidade que move a tela
-
-#FUNÇÃO MATRIZES
-def matrizes():
-    #linha vertical 
-    for j in range(colunas_max + 1):
-        pygame.draw.line(tela, WHITE, (j *tamanho - scroll,0), (j *tamanho - scroll, altura))
-    #linha horizontal 
-    for j in range(rows + 1):
-        pygame.draw.line(tela, WHITE, (0, j *tamanho), (altura, j *tamanho))
-
-#FUNÇÃO PRA DESENHAR AS PLATAFORMAS
-def desenhar_mundo():
-    #interar entre os valores da matriz
-    for y, row in enumerate(lista):
-        for x, tile in enumerate(row):
-            if tile >= 0:
-                tela.blit(img_lista[tile], (x *tamanho - scroll, y *tamanho ))
-
-
 
 #CRIAR OS BOTÕES DAS IMAGENS
 save_button = button.Button(largura // 2 + margem_lado, altura + margem - 50, save_img, 1)
@@ -143,12 +87,23 @@ for i in range(len(img_lista)):
         botao2 += 1
         botao1 = 0
 
+lista = []
+for row in range(rows):
+    r = [-1]*colunas_max
+    lista.append(r)
+with open(f'level{level}_data.csv', newline='') as csvfile:
+	reader = csv.reader(csvfile, delimiter=',')
+	for x, row in enumerate(reader):
+		for y, tile in enumerate(row):
+			lista[x][y] = int(tile)
+world = World()
+player = world.process_data(lista)
+
+
 rodando = True
 while rodando == True:
-
-    imagens()
-    matrizes()
-    desenhar_mundo()
+      
+    world.draw()
 
 
     #SALVAR OS DESENHOS 
