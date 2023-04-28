@@ -16,7 +16,7 @@ def baixar_sprite(dir1,width,height,direction = False):
         sprites = []
         for i in range (sprite_sheet.get_width() // width):
             surface = pygame.Surface((width,height), pygame.SRCALPHA, 32)
-            rect = pygame.Rect(i * width, 0, width, height)
+            rect = pygame.Rect(0, 0, width, height)
             surface.blit(sprite_sheet, (0,0), rect)
             sprites.append(pygame.transform.scale(surface,(100,120)))#TAMANHO DO PERSONAGEM PRINCIPAL(LUCAS)
         

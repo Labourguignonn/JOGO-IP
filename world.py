@@ -24,7 +24,7 @@ pygame.display.set_caption('Após a enchente')
 ################### LUCAS ###############################
 FPS = 30
 PLAYER_VEL = 1
-SCROLL_THRESH = 200
+SCROLL_THRESH = 0
 
 ############### FABY ####################
 #variaveis scrool
@@ -32,6 +32,7 @@ esquerda = False
 direita = False
 scroll = 0
 bg_scroll = 0
+scroll = 0
 #variaveis matriz
 rows = 16
 colunas_max = 150
@@ -101,21 +102,22 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     if tile == 6:
-                        player = Jogador('player', x * tamanho, y *tamanho, 100, 120)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
         for tile in self.lista_obstaculos:
-            tile[1][0] -= scroll
+            tile[1][0] += scroll
             tela.blit(tile[0], tile[1])
 
 class Jogador(pygame.sprite.Sprite):
+    PLAYER_VEL = 1
     GRAVITY = 0.1
     SPRITES = baixar_sprite("personagem",48,50, True)
     ANIMATION_DELAY = 50
     #INICIO DAS VARIAVEIS PRINCIPAIS
-    def __init__(self, char_type, x, y, width, height):
-        self.rect = pygame.Rect(x,y,width,height)
+    def __init__(self, char_type, x, y):
+        self.rect = pygame.Rect(x,y,55,120)
         ########
         self.char_type = char_type
         self.y_vel = 0
@@ -130,32 +132,41 @@ class Jogador(pygame.sprite.Sprite):
         self.fall_count = True
         self.jump_count = False
         self.ataque = False
-        self.width = width
-        self.height = height
+        self.width = 55
+        self.height = 120
         
     #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
     def move(self, dx, dy):
         #check for collision
+        scroll = 0
         for tile in world.lista_obstaculos:
             #check collision in the x direction
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+            if tile[1].colliderect(self.rect.left + dx, self.rect.y, self.width, self.height):
                 dx = 0
+            
+            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                    #check if below the ground, i.e. jumping
+                if self.y_vel< 0:
+                    self.y_vel = 0
+                    dy = tile[1].bottom - self.rect.top
+                #check if above the ground, i.e. falling
+                elif self.y_vel >= 0:
+                    self.y_vel = 0
+                    self.jump_count = False
+                    dy = tile[1].top - self.rect.bottom
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
         if self.char_type == 'player':
             if self.rect.left + dx < -50 or self.rect.right + dx > largura + 50:
                 dx = 0
-        scroll = 0
-        #update scroll based on player position
-        if self.char_type == 'player':
-            if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura)\
-                or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
-                self.rect.x -= dx
-                scroll = -dx
         self.rect.x += dx
         self.rect.y += dy
-
+        #update scroll based on player position
+        if self.char_type == 'player':
+            if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
+                self.rect.x -= dx
+                scroll = -dx
         return scroll
 
 
@@ -172,15 +183,14 @@ class Jogador(pygame.sprite.Sprite):
                self.animation_count = 0
     def jump(self):
         if self.jump_count == False:
-    ######mudanca#######
-          self.y_vel = -5
+          self.y_vel = -4
           self.jump_count = True
 
         #FUNCAO QUE VAI VERIFICAR O QUE O PERSONAGEM FAZ A CADA FRAME
     def loop(self, fps):
         self.y_vel += min(0.05, (self.fall_count/6*fps) * self.GRAVITY)
         self.move(self.x_vel,self.y_vel)
-        self.checar_chao(self.y_vel)
+        self.movimento()
         self.fall_count += 0.3
         self.update_sprite()
 
@@ -216,16 +226,13 @@ class Jogador(pygame.sprite.Sprite):
     def draw(self,tela):
         tela.blit(self.sprite, (self.rect.x,self.rect.y))
     
-    def checar_chao(self,dy):
-        if self.rect.bottom + dy > 563:
-            self.y_vel =  0
-            self.jump_count = False
     
     def movimento(self):
         keys = pygame.key.get_pressed()
         self.x_vel = 0
         if keys[pygame.K_LEFT]:
             self.mover_esquerda(PLAYER_VEL)
+            print("oi")
         if keys[pygame.K_RIGHT]:
             self.mover_direita(PLAYER_VEL)
 
@@ -252,12 +259,10 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 			lista[x][y] = int(tile)
                         
 #CRIAR GROUPS
+
 water_group = pygame.sprite.Group()
-
-
 world = World()
 player =  world.process_data(lista)
-
 
 rodando = True
 while rodando == True:
@@ -272,7 +277,10 @@ while rodando == True:
 
     water_group.update()
     water_group.draw(tela)
-
+    
+    scroll = player.move(0,0)
+    print(scroll)
+    bg_scroll -= scroll
 
         #MOVER A TELA 
     for event in pygame.event.get():
@@ -296,15 +304,5 @@ while rodando == True:
 
     pygame.display.update()
 
-
-
-"""
-    # impede que a tela role para fora dos limites definidos
-    if scroll < 0:
-        scroll = 0
-    if scroll > largura - margem_lado:
-        scroll = largura - margem_lado"""
-
-    # parte do personagem carreagndo na tela(Lucas
 
 pygame.quit()
