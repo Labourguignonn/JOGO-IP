@@ -232,7 +232,7 @@ class Jogador(pygame.sprite.Sprite):
         self.x_vel = 0
         if keys[pygame.K_LEFT]:
             self.mover_esquerda(PLAYER_VEL)
-            print("oi")
+           
         if keys[pygame.K_RIGHT]:
             self.mover_direita(PLAYER_VEL)
 
@@ -279,7 +279,7 @@ while rodando == True:
     water_group.draw(tela)
     
     scroll = player.move(0,0)
-    print(scroll)
+    #pode ser move(1,-1) ou (1, 0) 
     bg_scroll -= scroll
 
         #MOVER A TELA 
