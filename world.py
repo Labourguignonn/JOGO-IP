@@ -5,6 +5,11 @@ from os import listdir
 from os.path import isfile,join
 from funçoes import *
 
+
+largura = 1500
+altura = 640
+margem = 100
+margem_lado = 300
 pygame.init()
 ############### FABY #############################
 tela = pygame.display.set_mode((largura, altura))
@@ -15,10 +20,6 @@ FPS = 120
 clock = pygame.time.Clock()
 PLAYER_VEL = 2
 SCROLL_THRESH = 300
-largura = 1500
-altura = 640
-margem = 100
-margem_lado = 300
 
 ############### FABY ####################
 #variaveis scrool
@@ -136,14 +137,14 @@ class Jogador(pygame.sprite.Sprite):
     def move(self, mover_esquerda,mover_direita):
         dx = 0
         dy = self.y_vel
-        if mover_esquerda:
+        if mover_esquerda and andando == True:
           dx = -self.x_vel
           self.andando = True
           if self.virar != 'esquerda':
             self.virar = 'esquerda'
             self.animation_count = 0
     
-        if mover_direita:
+        if mover_direita and andando == True:
           dx = self.x_vel
           self.andando = True
           if self.virar != 'direita':
