@@ -59,7 +59,7 @@ tamanho = altura // rows
 level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 6
+tipo = 9
 current_tile = 0
 
 
