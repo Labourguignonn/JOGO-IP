@@ -5,26 +5,21 @@ from os import listdir
 from os.path import isfile,join
 from funçoes import *
 
-pygame.init()
-############### FABY #############################
-#GAME WINDOW
+
 largura = 1500
 altura = 640
-#lower
 margem = 100
-#side
 margem_lado = 300
-
-
+pygame.init()
+############### FABY #############################
 tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
-#######
-
 ################### LUCAS ###############################
-FPS = 30
-PLAYER_VEL = 1
-SCROLL_THRESH = 0
+FPS = 120
+clock = pygame.time.Clock()
+PLAYER_VEL = 2
+SCROLL_THRESH = 300
 
 ############### FABY ####################
 #variaveis scrool
@@ -43,7 +38,9 @@ level = 1
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
 tipo = 9
 current_tile = 0
-
+mover_esquerda = False
+mover_direita = True
+andando = False
 
 #ADD AS IMAGES
 background = pygame.image.load('Esgoto/sewer.png').convert_alpha()
@@ -102,7 +99,7 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     if tile == 6:
-                        player = Jogador('player', x * tamanho, y *tamanho)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,andando)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
@@ -116,13 +113,12 @@ class Jogador(pygame.sprite.Sprite):
     SPRITES = baixar_sprite("personagem",48,50, True)
     ANIMATION_DELAY = 50
     #INICIO DAS VARIAVEIS PRINCIPAIS
-    def __init__(self, char_type, x, y):
+    def __init__(self, char_type, x, y,vel,andando):
         self.rect = pygame.Rect(x,y,55,120)
-        ########
         self.char_type = char_type
-        self.y_vel = 0
         ##self speed
-        self.x_vel = 0
+        self.x_vel = vel
+        self.y_vel = 0
         self.mask = None
         #mudanca 
         self.virar = 'esquerda'
@@ -134,19 +130,37 @@ class Jogador(pygame.sprite.Sprite):
         self.ataque = False
         self.width = 55
         self.height = 120
+        self.andando = andando
+        
         
     #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
-    def move(self, dx, dy):
+    def move(self, mover_esquerda,mover_direita):
+        dx = 0
+        dy = self.y_vel
+        if mover_esquerda and andando == True:
+          dx = -self.x_vel
+          self.andando = True
+          if self.virar != 'esquerda':
+            self.virar = 'esquerda'
+            self.animation_count = 0
+    
+        if mover_direita and andando == True:
+          dx = self.x_vel
+          self.andando = True
+          if self.virar != 'direita':
+               self.virar = 'direita'
+               self.animation_count = 0
+        
         #check for collision
         scroll = 0
         for tile in world.lista_obstaculos:
             #check collision in the x direction
-            if tile[1].colliderect(self.rect.left + dx, self.rect.y, self.width, self.height):
-                dx = 0
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                dx = 0      
             
             if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
                     #check if below the ground, i.e. jumping
-                if self.y_vel< 0:
+                if self.y_vel < 0:
                     self.y_vel = 0
                     dy = tile[1].bottom - self.rect.top
                 #check if above the ground, i.e. falling
@@ -169,18 +183,6 @@ class Jogador(pygame.sprite.Sprite):
                 scroll = -dx
         return scroll
 
-
-    def mover_esquerda(self, vel):
-        self.x_vel = -vel
-        if self.virar != 'esquerda':
-            self.virar = 'esquerda'
-            self.animation_count = 0
-    
-    def mover_direita(self,vel):
-        self.x_vel = vel
-        if self.virar != 'direita':
-               self.virar = 'direita'
-               self.animation_count = 0
     def jump(self):
         if self.jump_count == False:
           self.y_vel = -4
@@ -188,9 +190,7 @@ class Jogador(pygame.sprite.Sprite):
 
         #FUNCAO QUE VAI VERIFICAR O QUE O PERSONAGEM FAZ A CADA FRAME
     def loop(self, fps):
-        self.y_vel += min(0.05, (self.fall_count/6*fps) * self.GRAVITY)
-        self.move(self.x_vel,self.y_vel)
-        self.movimento()
+        self.y_vel += min(0.05, (self.fall_count/fps) * self.GRAVITY)
         self.fall_count += 0.3
         self.update_sprite()
 
@@ -204,7 +204,7 @@ class Jogador(pygame.sprite.Sprite):
             if self.attack_animation_count >= len(sprites) * self.ANIMATION_DELAY:
                 self.ataque = False
                 self.attack_animation_count = 0
-        else:
+        else: 
             sprite_sheet = "Idle"
             if self.x_vel != 0:
                 sprite_sheet = "Walk"
@@ -213,12 +213,13 @@ class Jogador(pygame.sprite.Sprite):
             sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
             self.sprite = sprites[sprite_index]
             self.animation_count += 1
-
+        
         self.update()
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
         self.mask = pygame.mask.from_surface(self.sprite)
+    
     def atacar(self):
       if self.ataque == False:
         self.ataque = True 
@@ -226,16 +227,6 @@ class Jogador(pygame.sprite.Sprite):
     def draw(self,tela):
         tela.blit(self.sprite, (self.rect.x,self.rect.y))
     
-    
-    def movimento(self):
-        keys = pygame.key.get_pressed()
-        self.x_vel = 0
-        if keys[pygame.K_LEFT]:
-            self.mover_esquerda(PLAYER_VEL)
-           
-        if keys[pygame.K_RIGHT]:
-            self.mover_direita(PLAYER_VEL)
-
 class Water(pygame.sprite.Sprite):
 	def __init__(self, img, x, y):
 		pygame.sprite.Sprite.__init__(self)
@@ -268,18 +259,16 @@ rodando = True
 while rodando == True:
     imagens()
     world.draw()
-    
-
+    clock.tick(FPS)
     player.loop(FPS) 
-    player.movimento()
+    #player.movimento()
     player.update()
     player.draw(tela) 
 
     water_group.update()
     water_group.draw(tela)
     
-    scroll = player.move(0,0)
-    #pode ser move(1,-1) ou (1, 0) 
+    scroll = player.move(mover_esquerda,mover_direita) 
     bg_scroll -= scroll
 
         #MOVER A TELA 
@@ -289,18 +278,22 @@ while rodando == True:
         #pressionar teclas
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                esquerda = True
+                mover_esquerda = True
+                andando = True
             if event.key == pygame.K_RIGHT:
-                direita = True
+                mover_direita = True
+                andando = True
             if event.key == pygame.K_UP: #pulo do personagem
                 player.jump()
             if event.key == pygame.K_SPACE:
                 player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
-                esquerda = False
+                mover_esquerda = False
+                andando = False
             if event.key == pygame.K_RIGHT:
-                direita = False
+                mover_direita = False
+                andando = False
 
     pygame.display.update()
 
