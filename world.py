@@ -1,7 +1,7 @@
 import pygame
 import button
 import csv
-from os import listdir
+import os
 from os.path import isfile,join
 from funçoes import *
 
@@ -99,7 +99,7 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     if tile == 6:
-                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,andando)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,1.65, andando)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
@@ -113,13 +113,15 @@ class Jogador(pygame.sprite.Sprite):
     SPRITES = baixar_sprite("personagem",48,50, True)
     ANIMATION_DELAY = 50
     #INICIO DAS VARIAVEIS PRINCIPAIS
-    def __init__(self, char_type, x, y,vel,andando):
+    def __init__(self, char_type, x, y, scale,vel,andando):
         self.rect = pygame.Rect(x,y,55,120)
         self.char_type = char_type
         ##self speed
         self.x_vel = vel
         self.y_vel = 0
         self.mask = None
+        #####
+        self.animation_list = []
         #mudanca 
         self.virar = 'esquerda'
         #####
@@ -131,8 +133,47 @@ class Jogador(pygame.sprite.Sprite):
         self.width = 55
         self.height = 120
         self.andando = andando
-        
-        
+        ####
+        self.action = 0
+        self.frame_index = 0
+
+###CARREGAR IMAGENS DO PERSONAGEM#######
+        animações_personagem = ['Idle', 'Attack', 'Death', 'Walk']
+        for animation in animações_personagem:
+            #reset temporary list of images
+            temp_list = []
+            #count number of files in the folder
+            numero_frames = len(os.listdir(f'personagem/{animation}'))
+            for i in range(numero_frames):
+                img = pygame.image.load(f'personagem/{animation}/{i}.png').convert_alpha()
+                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                temp_list.append(img)
+            self.animation_list.append(temp_list)
+
+        self.image = self.animation_list[self.action][self.frame_index]
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+    def update_animation(self):
+        #update animation
+        ANIMATION_DELAY = 100
+        #update image depending on current frame
+        self.image = self.animation_list[self.action][self.frame_index]
+        #check if enough time has passed since the last update
+        if pygame.time.get_ticks() - self.update_time > ANIMATION_DELAY:
+            self.update_time = pygame.time.get_ticks()
+            self.frame_index += 1
+        #if the animation has run out the reset back to the start
+        if self.frame_index >= len(self.animation_list[self.action]):
+            if self.action == 3:
+                self.frame_index = len(self.animation_list[self.action]) - 1
+            else:
+                self.frame_index = 0
+
+    def update(self):
+        self.update_animation()
+
     #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
     def move(self, mover_esquerda,mover_direita):
         dx = 0
@@ -142,14 +183,14 @@ class Jogador(pygame.sprite.Sprite):
           self.andando = True
           if self.virar != 'esquerda':
             self.virar = 'esquerda'
-            self.animation_count = 0
+            self.animation_count += 1
     
         if mover_direita and andando == True:
           dx = self.x_vel
           self.andando = True
           if self.virar != 'direita':
                self.virar = 'direita'
-               self.animation_count = 0
+               self.animation_count += 1
         
         #check for collision
         scroll = 0
@@ -211,14 +252,12 @@ class Jogador(pygame.sprite.Sprite):
             sprite_sheet_name = sprite_sheet + "_" + self.virar
             sprites = self.SPRITES[sprite_sheet_name]
             sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
-            self.sprite = sprites[sprite_index]
-            self.animation_count += 1
-        
+            self.sprite = sprites[sprite_index]        
         self.update()
 
-    def update(self):
+    """def update(self):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
-        self.mask = pygame.mask.from_surface(self.sprite)
+        self.mask = pygame.mask.from_surface(self.sprite)"""
     
     def atacar(self):
       if self.ataque == False:
