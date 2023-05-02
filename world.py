@@ -15,10 +15,11 @@ tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
 ################### LUCAS ###############################
-FPS = 120
+FPS = 60
 clock = pygame.time.Clock()
-PLAYER_VEL = 2
+PLAYER_VEL = 3
 SCROLL_THRESH = 300
+GRAVITY = 0.1
 
 ############### FABY ####################
 #variaveis scrool
@@ -97,7 +98,7 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     if tile == 6:
-                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.00)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
@@ -107,7 +108,6 @@ class World():
 
 class Jogador(pygame.sprite.Sprite):
     PLAYER_VEL = 1
-    GRAVITY = 0.1
     #INICIO DAS VARIAVEIS PRINCIPAIS
     def __init__(self, char_type, x, y,vel, scale):
         pygame.sprite.Sprite.__init__(self)
@@ -122,7 +122,7 @@ class Jogador(pygame.sprite.Sprite):
         self.flip = False
         self.virar = 1
         #####
-        self.fall_count = True
+        self.fall = False
         self.jump_count = False
         self.ataque = False
         self.width = 55
@@ -157,7 +157,7 @@ class Jogador(pygame.sprite.Sprite):
 
     def update_animation(self):
         #update animation
-        ANIMATION_DELAY = 100
+        ANIMATION_DELAY = 130
         #update image depending on current frame
         self.image = self.animation_list[self.action][self.frame_index]
         #check if enough time has passed since the last update
@@ -191,9 +191,20 @@ class Jogador(pygame.sprite.Sprite):
 
         if mover_direita:
           dx = self.x_vel
-          self.flip = True
+          self.flip = False
           self.virar = 1
+
+        if self.jump_count == True and self.fall == False:
+          self.y_vel = -4
+          self.jump_count = False
+          self.fall = True
         
+        self.y_vel += GRAVITY
+        if self.y_vel > 10:
+            self.y_vel
+        dy += self.y_vel
+    
+
         #check for collision
         scroll = 0
         for tile in world.lista_obstaculos:
@@ -209,13 +220,14 @@ class Jogador(pygame.sprite.Sprite):
                 #check if above the ground, i.e. falling
                 elif self.y_vel >= 0:
                     self.y_vel = 0
+                    self.fall = False
                     self.jump_count = False
                     dy = tile[1].top - self.rect.bottom
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
         if self.char_type == 'player':
-            if self.rect.left + dx < -50 or self.rect.right + dx > largura + 50:
+            if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
@@ -227,10 +239,6 @@ class Jogador(pygame.sprite.Sprite):
                 scroll = -dx
         return scroll
 
-    def jump(self):
-        if self.jump_count == False:
-          self.y_vel = -4
-          self.jump_count = True
 
     def atacar(self):
         if self.ataque == False:
@@ -279,7 +287,7 @@ while rodando == True:
     water_group.update()
     water_group.draw(tela)
     
-    if mover_direita or mover_esquerda:
+    if (mover_direita or mover_esquerda) and player.fall == False:
         player.update_action(1) #walk
     else:
         player.update_action(0)#0: idle
@@ -300,7 +308,7 @@ while rodando == True:
             if event.key == pygame.K_RIGHT:
                 mover_direita = True
             if event.key == pygame.K_UP: #pulo do personagem
-                player.jump()
+                player.jump_count = True
             if event.key == pygame.K_SPACE:
                 player.atacar()
         if event.type == pygame.KEYUP:
