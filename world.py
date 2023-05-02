@@ -97,7 +97,7 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     if tile == 6:
-                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,1.65)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.00)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
@@ -133,7 +133,7 @@ class Jogador(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
-        animações_personagem = ['Idle', 'Walk', 'Attack', 'Death']
+        animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
         for animation in animações_personagem:
             #reset temporary list of images
             temp_list = []
