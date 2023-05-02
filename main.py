@@ -1,36 +1,33 @@
 import pygame
 import button
 import csv
-from os import listdir
+import os
 from os.path import isfile,join
-from jogador import Jogador
 
-pygame.init()
-############### FABY #############################
-#GAME WINDOW
+
 largura = 1500
 altura = 640
-#lower
 margem = 100
-#side
 margem_lado = 300
-
-
-tela = pygame.display.set_mode((largura, altura + margem))
+pygame.init()
+############### FABY #############################
+tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
-#######
-
 ################### LUCAS ###############################
-FPS = 30
-
+FPS = 60
+clock = pygame.time.Clock()
+PLAYER_VEL = 3
+SCROLL_THRESH = 300
+GRAVITY = 0.1
 
 ############### FABY ####################
 #variaveis scrool
 esquerda = False
 direita = False
-scroll = 4
-scroll_speed = 1
+scroll = 0
+bg_scroll = 0
+scroll = 0
 #variaveis matriz
 rows = 16
 colunas_max = 150
@@ -41,21 +38,18 @@ level = 1
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
 tipo = 9
 current_tile = 0
-
+mover_esquerda = False
+mover_direita = False
 
 #ADD AS IMAGES
 background = pygame.image.load('Esgoto/sewer.png').convert_alpha()
 background = pygame.transform.scale(background, (largura,altura))
-
 img_lista = []
 for x in range(tipo):
     #ADIÇÃO DAS IMAGENS NO INVENTARIO
     img = pygame.image.load(f'img/{x}.png').convert_alpha()
     img = pygame.transform.scale(img, (tamanho, tamanho))
     img_lista.append(img)
-
-save_img = pygame.image.load('4.png').convert_alpha()
-load_img = pygame.image.load('5.png').convert_alpha()
 
 
 #DEFINIR CORES 
@@ -65,137 +59,265 @@ GREEN = (144, 201, 120)
 
 
 font = pygame.font.SysFont('Futura', 30)
-#CRIAR LISTA COM OS ESPAÇOS VAZIOS
-#World data
-lista = []
-for row in range(rows):
-    r = [-1]*colunas_max
-    lista.append(r)
-
-#CRIAR CHÃO
-for tile in range(0, colunas_max):
-    lista[rows - 2][tile] = 0 ##número da foto
-
-for tile in range(0, colunas_max):
-    lista[rows - 1][tile] = 1 ##número da foto
-
 
 def imagens():
     tela.fill(WHITE)
     width = tela.get_width()
     #quantas vezes a imagem repete 
     for x in range(4):
-        tela.blit(background,((x*width) - scroll*0.7, 0)) ##0.7 == velocidade que move a tela
+        tela.blit(background,((x*width) - bg_scroll*0.7, 0)) ##0.7 == velocidade que move a tela
 
-#FUNÇÃO MATRIZES
-def matrizes():
-    #linha vertical 
-    for j in range(colunas_max + 1):
-        pygame.draw.line(tela, WHITE, (j *tamanho - scroll,0), (j *tamanho - scroll, altura))
-    #linha horizontal 
-    for j in range(rows + 1):
-        pygame.draw.line(tela, WHITE, (0, j *tamanho), (altura, j *tamanho))
+def reset_level():
+    water_group.empty()
+    data = []
+    for row in range(rows):
+        r = [-1]*colunas_max
+        data.append(r)
 
-#FUNÇÃO PRA DESENHAR AS PLATAFORMAS
-def desenhar_mundo():
-    #interar entre os valores da matriz
-    for y, row in enumerate(lista):
-        for x, tile in enumerate(row):
-            if tile >= 0:
-                tela.blit(img_lista[tile], (x *tamanho - scroll, y *tamanho ))
+    return data
 
 
+class World():
+    def __init__(self):
+        self.lista_obstaculos = []
+    def process_data(self, data):
+        self.level_length = len(data[0])
+        for y, row in enumerate(data):
+            for x, tile in enumerate(row):
+                if tile >= 0:
+                    img = img_lista[tile]
+                    img_rect = img.get_rect()
+                    img_rect.x = x * tamanho
+                    img_rect.y = y * tamanho
+                    tile_data = (img, img_rect)
+                    if tile == 0 or tile == 2 or tile == 4 or tile == 5 or tile == 1:
+                        self.lista_obstaculos.append(tile_data)
+                    if tile == 3: 
+                        water = Water(img, x * tamanho, y * tamanho)
+                        water_group.add(water)
+                    if tile == 7 or tile == 8:
+                        pass #inimigos
+                    if tile == 6:
+                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
 
-#CRIAR OS BOTÕES DAS IMAGENS
-save_button = button.Button(largura // 2 + margem_lado, altura + margem - 50, save_img, 1)
-load_button = button.Button(largura // 2 + 200, altura + margem - 50, load_img, 1)
-botao_lista = []
-#col
-botao1 = 0 
-#row
-botao2 = 0
+        return player
+    def draw(self):
+        for tile in self.lista_obstaculos:
+            tile[1][0] += scroll
+            tela.blit(tile[0], tile[1])
 
-for i in range(len(img_lista)):
-    ideia_botao = button.Button(altura + (75 *botao1) + 50, 75 * botao2 + 50, img_lista[i], 1)
-    botao_lista.append(ideia_botao)
-    botao1 += 1
-    if botao1 == 3:
-        botao2 += 1
-        botao1 = 0
+class Jogador(pygame.sprite.Sprite):
+    PLAYER_VEL = 1
+    #INICIO DAS VARIAVEIS PRINCIPAIS
+    def __init__(self, char_type, x, y,vel, scale):
+        pygame.sprite.Sprite.__init__(self)
+        self.char_type = char_type
+        ##self speed
+        self.x_vel = vel
+        self.y_vel = 0
+        self.mask = None
+        #####
+        self.animation_list = []
+        #mudanca 
+        self.flip = False
+        self.virar = 1
+        #####
+        self.fall = False
+        self.jump_count = False
+        self.ataque = False
+        self.width = 55
+        self.height = 120
+        ####
+        self.action = 0
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
+###CARREGAR IMAGENS DO PERSONAGEM#######
+        animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
+        for animation in animações_personagem:
+            #reset temporary list of images
+            temp_list = []
+            #count number of files in the folder
+            numero_frames = len(os.listdir(f'personagem/{animation}'))
+            for i in range(numero_frames):
+                img = pygame.image.load(f'personagem/{animation}/{i}.png').convert_alpha()
+                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                temp_list.append(img)
+            self.animation_list.append(temp_list)
+
+        self.image = self.animation_list[self.action][self.frame_index]
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+    
+    
+    def update(self):
+        self.update_animation()
+
+    def update_animation(self):
+        #update animation
+        ANIMATION_DELAY = 130
+        #update image depending on current frame
+        self.image = self.animation_list[self.action][self.frame_index]
+        #check if enough time has passed since the last update
+        if pygame.time.get_ticks() - self.update_time > ANIMATION_DELAY:
+            self.update_time = pygame.time.get_ticks()
+            self.frame_index += 1
+        #if the animation has run out the reset back to the start
+        if self.frame_index >= len(self.animation_list[self.action]):
+            if self.action == 3:
+                self.frame_index = len(self.animation_list[self.action]) - 1
+            else:
+                self.frame_index = 0
+                
+    def update_action(self, new_action):
+        #check if the new action is different to the previous one
+        if new_action != self.action:
+            self.action = new_action
+            #update the animation settings
+            self.frame_index = 0
+            self.update_time = pygame.time.get_ticks()
+
+
+    #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
+    def move(self, mover_esquerda,mover_direita):
+        dx = 0
+        dy = self.y_vel
+        if mover_esquerda:
+          dx = -self.x_vel
+          self.flip = True 
+          self.virar = -1
+
+        if mover_direita:
+          dx = self.x_vel
+          self.flip = False
+          self.virar = 1
+
+        if self.jump_count == True and self.fall == False:
+          self.y_vel = -4
+          self.jump_count = False
+          self.fall = True
+        
+        self.y_vel += GRAVITY
+        if self.y_vel > 10:
+            self.y_vel
+        dy += self.y_vel
+    
+
+        #check for collision
+        scroll = 0
+        for tile in world.lista_obstaculos:
+            #check collision in the x direction
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                dx = 0      
+            
+            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                    #check if below the ground, i.e. jumping
+                if self.y_vel < 0:
+                    self.y_vel = 0
+                    dy = tile[1].bottom - self.rect.top
+                #check if above the ground, i.e. falling
+                elif self.y_vel >= 0:
+                    self.y_vel = 0
+                    self.fall = False
+                    self.jump_count = False
+                    dy = tile[1].top - self.rect.bottom
+        #check for collision with water
+        if pygame.sprite.spritecollide(self, water_group, False):
+            self.health = 0
+        if self.char_type == 'player':
+            if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
+                dx = 0
+        self.rect.x += dx
+        self.rect.y += dy
+
+        #update scroll based on player position
+        if self.char_type == 'player':
+            if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
+                self.rect.x -= dx
+                scroll = -dx
+        return scroll
+
+
+    def atacar(self):
+        if self.ataque == False:
+            self.ataque = True 
+    
+    def draw(self):
+	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+
+    
+class Water(pygame.sprite.Sprite):
+	def __init__(self, img, x, y):
+		pygame.sprite.Sprite.__init__(self)
+		self.image = img
+		self.rect = self.image.get_rect()
+		self.rect.midtop = (x + tamanho // 2, y + (tamanho - self.image.get_height()))
+
+	def update(self):
+		self.rect.x += scroll
+
+#CRIAR GROUPS
+water_group = pygame.sprite.Group()
+#World data
+lista = []
+for row in range(rows):
+    r = [-1]*colunas_max
+    lista.append(r)
+#load in level data and create world
+with open(f'level{level}_data.csv', newline='') as csvfile:
+	reader = csv.reader(csvfile, delimiter=',')
+	for x, row in enumerate(reader):
+		for y, tile in enumerate(row):
+			lista[x][y] = int(tile)
+                        
+world = World()
+player =  world.process_data(lista)
 
 rodando = True
 while rodando == True:
-
     imagens()
-    matrizes()
-    desenhar_mundo()
+    world.draw()
+    clock.tick(FPS)
 
+    player.update()
+    player.draw() 
 
-    #SALVAR OS DESENHOS 
-    if save_button.draw(tela):
-        with open(f'level{level}_data.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter = ',')
-            for row in lista:
-                writer.writerow(row)
-
-    #RECUPERAR O DESENHO AO ABRIR O JOGO
-    if load_button.draw(tela):
-            scroll = 0
-            with open(f'level{level}_data.csv', newline='') as csvfile:
-                reader = csv.reader(csvfile, delimiter = ',')
-                for x, row in enumerate(reader):
-                    for y, tile in enumerate(row):
-                        lista[x][y] = int(tile)
-
-    #painel/invetário 
-    pygame.draw.rect(tela, WHITE, (altura, 0, margem_lado, largura))
-    contador_botao = 0
-    for contador_botao, i in enumerate(botao_lista): 
-        if i.draw(tela):
-            current_tile = contador_botao
-
-    #marca que fica sobre as imagens dentro do inventário 
-    pygame.draw.rect(tela, GREEN, botao_lista[current_tile].rect, 3)
+    water_group.update()
+    water_group.draw(tela)
     
-    #MAXIMO DE LARGURA DA TELA
-    if esquerda == True and scroll > 0: 
-        scroll -= 5 * scroll_speed
-    if direita == True and scroll < (colunas_max * tamanho) - largura: #PARA PARAR A LARGURA NA DIREITA
-        scroll += 5 * scroll_speed
-    
-    #FAZER O MOUSE PUXAR A IMAGEM PARA POR NA GRADE
-    posicao = pygame.mouse.get_pos()
-    x = (posicao[0] + scroll) // tamanho
-    y = posicao[1] // tamanho
+    if (mover_direita or mover_esquerda) and player.fall == False:
+        player.update_action(1) #walk
+    else:
+        player.update_action(0)#0: idle
 
-    #VER SE O CLIQUE ESTÁ SENDO NA ALTURA E LARGURA DO JOGO 
-    if posicao[0] < largura and posicao[1] < altura:
-        if pygame.mouse.get_pressed()[0] == 1:
-            if lista[y][x] != current_tile:
-                lista[y][x] = current_tile
-        #CLICAR COM O BOTÃO DIREITO E APAGA O QUE FOI FEITO
-        if pygame.mouse.get_pressed()[2] == 1:
-             lista[y][x] = -1
-    
-    #MOVER A TELA 
+
+    scroll = player.move(mover_esquerda,mover_direita) 
+    bg_scroll -= scroll
+
+
+        #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             rodando = False 
         #pressionar teclas
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                esquerda = True
+                mover_esquerda = True
             if event.key == pygame.K_RIGHT:
-                direita = True  
+                mover_direita = True
+            if event.key == pygame.K_UP: #pulo do personagem
+                player.jump_count = True
+            if event.key == pygame.K_SPACE:
+                player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
-                esquerda = False
+                mover_esquerda = False
             if event.key == pygame.K_RIGHT:
-                direita = False
+                mover_direita = False
 
-    
-     # parte do personagem carreagndo na tela(Lucas)
-     
     pygame.display.update()
-    
+
+
 pygame.quit()
