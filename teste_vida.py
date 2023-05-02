@@ -18,7 +18,7 @@ pygame.display.set_caption('Após a enchente')
 ################### LUCAS ###############################
 FPS = 60
 clock = pygame.time.Clock()
-PLAYER_VEL = 3
+PLAYER_VEL = 4
 SCROLL_THRESH = 300
 GRAVITY = 0.1
 
@@ -230,6 +230,8 @@ class Jogador(pygame.sprite.Sprite):
                     dy = tile[1].top - self.rect.bottom
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
+            self.health = 0
+        if self.rect.bottom > altura:
             self.health = 0
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
