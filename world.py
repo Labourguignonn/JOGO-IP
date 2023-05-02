@@ -1,9 +1,8 @@
 import pygame
 import button
 import csv
-from os import listdir
+import os
 from os.path import isfile,join
-from funçoes import *
 
 
 largura = 1500
@@ -16,10 +15,11 @@ tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
 ################### LUCAS ###############################
-FPS = 120
+FPS = 60
 clock = pygame.time.Clock()
-PLAYER_VEL = 2
+PLAYER_VEL = 3
 SCROLL_THRESH = 300
+GRAVITY = 0.1
 
 ############### FABY ####################
 #variaveis scrool
@@ -39,8 +39,7 @@ level = 1
 tipo = 9
 current_tile = 0
 mover_esquerda = False
-mover_direita = True
-andando = False
+mover_direita = False
 
 #ADD AS IMAGES
 background = pygame.image.load('Esgoto/sewer.png').convert_alpha()
@@ -99,7 +98,7 @@ class World():
                     if tile == 7 or tile == 8:
                         pass #inimigos
                     if tile == 6:
-                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,andando)#tamanhos do personagem(Lucas)
+                        player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
 
         return player
     def draw(self):
@@ -109,48 +108,103 @@ class World():
 
 class Jogador(pygame.sprite.Sprite):
     PLAYER_VEL = 1
-    GRAVITY = 0.1
-    SPRITES = baixar_sprite("personagem",48,50, True)
-    ANIMATION_DELAY = 50
     #INICIO DAS VARIAVEIS PRINCIPAIS
-    def __init__(self, char_type, x, y,vel,andando):
-        self.rect = pygame.Rect(x,y,55,120)
+    def __init__(self, char_type, x, y,vel, scale):
+        pygame.sprite.Sprite.__init__(self)
         self.char_type = char_type
         ##self speed
         self.x_vel = vel
         self.y_vel = 0
         self.mask = None
-        #mudanca 
-        self.virar = 'esquerda'
         #####
-        self.attack_animation_count = 0
-        self.animation_count = 0
-        self.fall_count = True
+        self.animation_list = []
+        #mudanca 
+        self.flip = False
+        self.virar = 1
+        #####
+        self.fall = False
         self.jump_count = False
         self.ataque = False
         self.width = 55
         self.height = 120
-        self.andando = andando
-        
-        
+        ####
+        self.action = 0
+        self.frame_index = 0
+        self.update_time = pygame.time.get_ticks()
+
+###CARREGAR IMAGENS DO PERSONAGEM#######
+        animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
+        for animation in animações_personagem:
+            #reset temporary list of images
+            temp_list = []
+            #count number of files in the folder
+            numero_frames = len(os.listdir(f'personagem/{animation}'))
+            for i in range(numero_frames):
+                img = pygame.image.load(f'personagem/{animation}/{i}.png').convert_alpha()
+                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                temp_list.append(img)
+            self.animation_list.append(temp_list)
+
+        self.image = self.animation_list[self.action][self.frame_index]
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+    
+    
+    def update(self):
+        self.update_animation()
+
+    def update_animation(self):
+        #update animation
+        ANIMATION_DELAY = 130
+        #update image depending on current frame
+        self.image = self.animation_list[self.action][self.frame_index]
+        #check if enough time has passed since the last update
+        if pygame.time.get_ticks() - self.update_time > ANIMATION_DELAY:
+            self.update_time = pygame.time.get_ticks()
+            self.frame_index += 1
+        #if the animation has run out the reset back to the start
+        if self.frame_index >= len(self.animation_list[self.action]):
+            if self.action == 3:
+                self.frame_index = len(self.animation_list[self.action]) - 1
+            else:
+                self.frame_index = 0
+                
+    def update_action(self, new_action):
+        #check if the new action is different to the previous one
+        if new_action != self.action:
+            self.action = new_action
+            #update the animation settings
+            self.frame_index = 0
+            self.update_time = pygame.time.get_ticks()
+
+
     #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
     def move(self, mover_esquerda,mover_direita):
         dx = 0
         dy = self.y_vel
-        if mover_esquerda and andando == True:
+        if mover_esquerda:
           dx = -self.x_vel
-          self.andando = True
-          if self.virar != 'esquerda':
-            self.virar = 'esquerda'
-            self.animation_count = 0
-    
-        if mover_direita and andando == True:
+          self.flip = True 
+          self.virar = -1
+
+        if mover_direita:
           dx = self.x_vel
-          self.andando = True
-          if self.virar != 'direita':
-               self.virar = 'direita'
-               self.animation_count = 0
+          self.flip = False
+          self.virar = 1
+
+        if self.jump_count == True and self.fall == False:
+          self.y_vel = -4
+          self.jump_count = False
+          self.fall = True
         
+        self.y_vel += GRAVITY
+        if self.y_vel > 10:
+            self.y_vel
+        dy += self.y_vel
+    
+
         #check for collision
         scroll = 0
         for tile in world.lista_obstaculos:
@@ -166,16 +220,18 @@ class Jogador(pygame.sprite.Sprite):
                 #check if above the ground, i.e. falling
                 elif self.y_vel >= 0:
                     self.y_vel = 0
+                    self.fall = False
                     self.jump_count = False
                     dy = tile[1].top - self.rect.bottom
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
         if self.char_type == 'player':
-            if self.rect.left + dx < -50 or self.rect.right + dx > largura + 50:
+            if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
+
         #update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
@@ -183,49 +239,14 @@ class Jogador(pygame.sprite.Sprite):
                 scroll = -dx
         return scroll
 
-    def jump(self):
-        if self.jump_count == False:
-          self.y_vel = -4
-          self.jump_count = True
 
-        #FUNCAO QUE VAI VERIFICAR O QUE O PERSONAGEM FAZ A CADA FRAME
-    def loop(self, fps):
-        self.y_vel += min(0.05, (self.fall_count/fps) * self.GRAVITY)
-        self.fall_count += 0.3
-        self.update_sprite()
-
-    def update_sprite(self):
-        if self.ataque:
-            sprite_sheet_name = "Attack" + "_" + self.virar
-            sprites = self.SPRITES[sprite_sheet_name]
-            sprite_index = (self.attack_animation_count // self.ANIMATION_DELAY) % len(sprites)
-            self.sprite = sprites[sprite_index]
-            self.attack_animation_count += 1
-            if self.attack_animation_count >= len(sprites) * self.ANIMATION_DELAY:
-                self.ataque = False
-                self.attack_animation_count = 0
-        else: 
-            sprite_sheet = "Idle"
-            if self.x_vel != 0:
-                sprite_sheet = "Walk"
-            sprite_sheet_name = sprite_sheet + "_" + self.virar
-            sprites = self.SPRITES[sprite_sheet_name]
-            sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
-            self.sprite = sprites[sprite_index]
-            self.animation_count += 1
-        
-        self.update()
-
-    def update(self):
-        self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
-        self.mask = pygame.mask.from_surface(self.sprite)
-    
     def atacar(self):
-      if self.ataque == False:
-        self.ataque = True 
-        
-    def draw(self,tela):
-        tela.blit(self.sprite, (self.rect.x,self.rect.y))
+        if self.ataque == False:
+            self.ataque = True 
+    
+    def draw(self):
+	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+
     
 class Water(pygame.sprite.Sprite):
 	def __init__(self, img, x, y):
@@ -237,6 +258,8 @@ class Water(pygame.sprite.Sprite):
 	def update(self):
 		self.rect.x += scroll
 
+#CRIAR GROUPS
+water_group = pygame.sprite.Group()
 #World data
 lista = []
 for row in range(rows):
@@ -249,9 +272,6 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 		for y, tile in enumerate(row):
 			lista[x][y] = int(tile)
                         
-#CRIAR GROUPS
-
-water_group = pygame.sprite.Group()
 world = World()
 player =  world.process_data(lista)
 
@@ -260,16 +280,22 @@ while rodando == True:
     imagens()
     world.draw()
     clock.tick(FPS)
-    player.loop(FPS) 
-    #player.movimento()
+
     player.update()
-    player.draw(tela) 
+    player.draw() 
 
     water_group.update()
     water_group.draw(tela)
     
+    if (mover_direita or mover_esquerda) and player.fall == False:
+        player.update_action(1) #walk
+    else:
+        player.update_action(0)#0: idle
+
+
     scroll = player.move(mover_esquerda,mover_direita) 
     bg_scroll -= scroll
+
 
         #MOVER A TELA 
     for event in pygame.event.get():
@@ -279,21 +305,17 @@ while rodando == True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 mover_esquerda = True
-                andando = True
             if event.key == pygame.K_RIGHT:
                 mover_direita = True
-                andando = True
             if event.key == pygame.K_UP: #pulo do personagem
-                player.jump()
+                player.jump_count = True
             if event.key == pygame.K_SPACE:
                 player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 mover_esquerda = False
-                andando = False
             if event.key == pygame.K_RIGHT:
                 mover_direita = False
-                andando = False
 
     pygame.display.update()
 

@@ -192,6 +192,21 @@ class Soldier(pygame.sprite.Sprite):
 		if self.shoot_cooldown > 0:
 			self.shoot_cooldown -= 1
     ##############################
+	def update_animation(self):
+		#update animation
+		ANIMATION_COOLDOWN = 100
+		#update image depending on current frame
+		self.image = self.animation_list[self.action][self.frame_index]
+		#check if enough time has passed since the last update
+		if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
+			self.update_time = pygame.time.get_ticks()
+			self.frame_index += 1
+		#if the animation has run out the reset back to the start
+		if self.frame_index >= len(self.animation_list[self.action]):
+			if self.action == 3:
+				self.frame_index = len(self.animation_list[self.action]) - 1
+			else:
+				self.frame_index = 0
 
 ############JA TEMOS##########
 	def move(self, moving_left, moving_right):
@@ -331,6 +346,12 @@ class Soldier(pygame.sprite.Sprite):
 
 	def draw(self):
 		screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+
+
+
+
+
+
 
 
 class World():

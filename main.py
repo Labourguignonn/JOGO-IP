@@ -24,26 +24,6 @@ pygame.display.set_caption('Após a enchente')
 ################### LUCAS ###############################
 FPS = 30
 
-player = Jogador('player',100,100,80,80)#tamanhos do personagem(Lucas)
-
-"""""class World():
-    def process_data(self, data):
-        self.level_length = len(data[0])
-        for y, row in enumerate(lista):
-            for x, tile in enumerate(row):
-                if tile >= 0:
-                    img = img_lista[tile]
-                    img_rect = img.get_rect()
-                    img_rect.x = x * tamanho
-                    img_rect.y = y * tamanho
-                    tile_data = (img, img_rect)
-            if tile >= 3 and tile <= 4:
-				water = Water(img, x * tamanho, y * tamanho)
-				water_group.add(water)
-            if tile == 15:#create player
-               player = Jogador('player',100,100,80,80)
-"""""
-
 
 ############### FABY ####################
 #variaveis scrool
@@ -206,11 +186,7 @@ while rodando == True:
             if event.key == pygame.K_LEFT:
                 esquerda = True
             if event.key == pygame.K_RIGHT:
-                direita = True
-            if event.key == pygame.K_UP: #pulo do personagem
-               player.jump()
-            if event.key == pygame.K_SPACE:
-              player.atacar()
+                direita = True  
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 esquerda = False
@@ -219,9 +195,7 @@ while rodando == True:
 
     
      # parte do personagem carreagndo na tela(Lucas)
-    player.loop(FPS) 
-    player.movimento()
-    player.draw(tela) 
+     
     pygame.display.update()
     
 pygame.quit()
