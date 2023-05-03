@@ -3,7 +3,7 @@ import button
 import csv
 import os
 from os.path import isfile,join
-
+from enemies import enemy
 
 largura = 1500
 altura = 640
@@ -274,7 +274,7 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
                         
 world = World()
 player =  world.process_data(lista)
-
+rato = enemy(1000, 496, 32, 32, 1300)
 rodando = True
 while rodando == True:
     imagens()
@@ -283,6 +283,7 @@ while rodando == True:
 
     player.update()
     player.draw() 
+    rato.draw(tela)
 
     water_group.update()
     water_group.draw(tela)

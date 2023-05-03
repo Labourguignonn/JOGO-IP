@@ -194,7 +194,7 @@ while rodando == True:
                 direita = False
 
     
-     # parte do personagem carreagndo na tela(Lucas)
+     # parte do personagem carreagando na tela(Lucas)
      
     pygame.display.update()
     
