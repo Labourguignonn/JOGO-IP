@@ -1,17 +1,21 @@
 import pygame
 
-class enemy(object):
+class Enemy(pygame.sprite.Sprite):
     walkRight = [pygame.image.load('rato/walk/walk_01.png'), pygame.image.load('rato/walk/walk_02.png'), pygame.image.load('rato/walk/walk_03.png'), pygame.image.load('rato/walk/walk_04.png')]
     walkLeft = [pygame.image.load('rato/walk/walk_05.png'), pygame.image.load('rato/walk/walk_06.png'), pygame.image.load('rato/walk/walk_07.png'), pygame.image.load('rato/walk/walk_08.png')]
-    
-    def __init__(self, x, y, width, height, end):
+    def __init__(self, char_type,img,tamanho, x, y, width, height, end):
+        pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
+        self.char_type = char_type
         self.width = width
         self.height = height
         self.path = [x, end]
         self.walkCount = 0
         self.vel = 3
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.midtop = (x + tamanho // 2, y + (tamanho - self.image.get_height()))
 
     def draw(self, win):
         self.move()
@@ -40,3 +44,6 @@ class enemy(object):
                 self.vel = self.vel * -1
                 self.x += self.vel
                 self.walkCount = 0
+    
+    def update(self,scroll):
+        self.rect.x += scroll

@@ -4,6 +4,8 @@ import csv
 import os
 from os.path import isfile,join
 from life import HealthBar
+from enemies import Enemy
+from potion import Potion
 
 
 largura = 1500
@@ -37,7 +39,7 @@ tamanho = altura // rows
 level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 9
+tipo = 10
 current_tile = 0
 mover_esquerda = False
 mover_direita = False
@@ -70,6 +72,8 @@ def imagens():
 
 def reset_level():
     water_group.empty()
+    enemy_group.empty()
+    cure_potion_group.empty()
     data = []
     for row in range(rows):
         r = [-1]*colunas_max
@@ -97,10 +101,14 @@ class World():
                         water = Water(img, x * tamanho, y * tamanho)
                         water_group.add(water)
                     if tile == 7 or tile == 8:
-                        pass #inimigos
+                        enemy = Enemy('enemy',img,tamanho, 1000, 496, 32, 32, 1300)
+                        enemy_group.add(enemy)
                     if tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
                         health_bar = HealthBar(10, 10, player.health, player.health)
+                    if tile == 9:
+                        cure_potion = Potion(img, x * tamanho, y * tamanho,tamanho)
+                        cure_potion_group.add(cure_potion)
 
 
         return player, health_bar
@@ -123,7 +131,6 @@ class Jogador(pygame.sprite.Sprite):
         self.animation_list = []
         #mudanca 
         self.flip = False
-        self.virar = 1
         #####
         self.fall = False
         self.jump_count = False
@@ -135,6 +142,7 @@ class Jogador(pygame.sprite.Sprite):
         self.action = 0
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
+        self.walkCount = 0
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -191,12 +199,10 @@ class Jogador(pygame.sprite.Sprite):
         if mover_esquerda:
           dx = -self.x_vel
           self.flip = True 
-          self.virar = -1
 
         if mover_direita:
           dx = self.x_vel
           self.flip = False
-          self.virar = 1
 
         if self.jump_count == True and self.fall == False:
           self.y_vel = -4
@@ -217,6 +223,11 @@ class Jogador(pygame.sprite.Sprite):
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0      
             
+                if self.char_type == 'enemy':
+                        print("inimigo")
+                        self.flip = False
+                        self.walkCount = 0
+            
             if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
                     #check if below the ground, i.e. jumping
                 if self.y_vel < 0:
@@ -232,13 +243,16 @@ class Jogador(pygame.sprite.Sprite):
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
         if self.rect.bottom > altura:
-            self.health = 0
+            self.health -= 10
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
-
+        #check collision with health potion
+        if pygame.sprite.spritecollide(self, cure_potion_group, False):
+            self.health += 25
+        
         #update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
@@ -262,6 +276,9 @@ class Water(pygame.sprite.Sprite):
 
 #CRIAR GROUPS
 water_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
+cure_potion_group = pygame.sprite.Group()
+
 #World data
 lista = []
 for row in range(rows):
@@ -289,6 +306,9 @@ while rodando == True:
     water_group.update()
     water_group.draw(tela)
     
+    cure_potion_group.update(scroll)
+    cure_potion_group.draw(tela)
+    
     if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
         player.update_action(1) #walk
     elif player.ataque:
@@ -299,6 +319,10 @@ while rodando == True:
 
     scroll = player.move(mover_esquerda,mover_direita) 
     bg_scroll -= scroll
+
+    for enemy in enemy_group:
+        enemy.update(scroll)
+        enemy.draw(tela)
 
 
         #MOVER A TELA 
