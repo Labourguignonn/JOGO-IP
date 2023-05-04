@@ -4,9 +4,8 @@ import csv
 import os
 from os.path import isfile,join
 from life import HealthBar
-from enemies import Enemy
 from potion import Potion
-
+from enemies import Enemy
 
 largura = 1500
 altura = 640
@@ -97,19 +96,18 @@ class World():
                     tile_data = (img, img_rect)
                     if tile == 0 or tile == 2 or tile == 4 or tile == 5 or tile == 1:
                         self.lista_obstaculos.append(tile_data)
-                    if tile == 3: 
+                    elif tile == 3: 
                         water = Water(img, x * tamanho, y * tamanho)
                         water_group.add(water)
-                    if tile == 7 or tile == 8:
-                        enemy = Enemy('enemy',img,tamanho, 1000, 496, 32, 32, 1300)
-                        enemy_group.add(enemy)
-                    if tile == 6:
+                    elif tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
                         health_bar = HealthBar(10, 10, player.health, player.health)
-                    if tile == 9:
+                    elif tile == 7:
+                        enemy = Enemy('enemy',img, x * tamanho, y *tamanho, 1300)
+                        enemy_group.add(enemy)
+                    elif tile == 9:
                         cure_potion = Potion(img, x * tamanho, y * tamanho,tamanho)
                         cure_potion_group.add(cure_potion)
-
 
         return player, health_bar
     def draw(self):
@@ -131,6 +129,7 @@ class Jogador(pygame.sprite.Sprite):
         self.animation_list = []
         #mudanca 
         self.flip = False
+        self.virar = 1
         #####
         self.fall = False
         self.jump_count = False
@@ -150,9 +149,9 @@ class Jogador(pygame.sprite.Sprite):
             #reset temporary list of images
             temp_list = []
             #count number of files in the folder
-            numero_frames = len(os.listdir(f'personagem/{animation}'))
+            numero_frames = len(os.listdir(f'img/{self.char_type}/{animation}'))
             for i in range(numero_frames):
-                img = pygame.image.load(f'personagem/{animation}/{i}.png').convert_alpha()
+                img = pygame.image.load(f'img/{self.char_type}/{animation}/{i}.png').convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
@@ -222,10 +221,9 @@ class Jogador(pygame.sprite.Sprite):
             #check collision in the x direction
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0      
-            
                 if self.char_type == 'enemy':
                         print("inimigo")
-                        self.flip = False
+                        self.virar *= -1
                         self.walkCount = 0
             
             if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
@@ -303,6 +301,11 @@ while rodando == True:
     player.update()
     player.draw() 
 
+    for enemy in enemy_group:
+        enemy.update(scroll)
+        enemy.draw(tela)
+
+
     water_group.update()
     water_group.draw(tela)
     
@@ -319,13 +322,7 @@ while rodando == True:
 
     scroll = player.move(mover_esquerda,mover_direita) 
     bg_scroll -= scroll
-
-    for enemy in enemy_group:
-        enemy.update(scroll)
-        enemy.draw(tela)
-
-
-        #MOVER A TELA 
+    #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             rodando = False 
