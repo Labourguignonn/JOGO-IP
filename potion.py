@@ -12,5 +12,9 @@ class Potion(pygame.sprite.Sprite):
 	def update(self,scroll):
 		self.rect.x += scroll
 	
+
+	
+
+	
 	def kill(self):
 		self.kill()
