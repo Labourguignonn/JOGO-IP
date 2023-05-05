@@ -93,7 +93,7 @@ class World():
                     img_rect.x = x * tamanho
                     img_rect.y = y * tamanho
                     tile_data = (img, img_rect)
-                    if tile == 0 or tile == 2 or tile == 4 or tile == 5 or tile == 1:
+                    if tile == 0 or tile == 1 or tile == 2 or tile == 4 or tile == 5 or tile == 8:
                         self.lista_obstaculos.append(tile_data)
                     elif tile == 3: 
                         water = Water(img, x * tamanho, y * tamanho)
@@ -101,7 +101,7 @@ class World():
                     elif tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
                         health_bar = HealthBar(10, 10, player.health, player.health)
-                    elif tile == 7:
+                    elif tile == 7 or tile == 8:
                         enemy = Jogador('enemy', x * tamanho, y * tamanho,1, 2.00)
                         enemy_group.add(enemy)
                     elif tile == 9:
@@ -243,8 +243,12 @@ class Jogador(pygame.sprite.Sprite):
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
-        if self.rect.bottom > altura:
-            self.health -= 10
+        if pygame.sprite.spritecollide(player, enemy_group,True) and player.ataque == True:
+            if player.alive:
+                player.health -= 5
+            self.kill()
+        #if self.rect.bottom > altura:
+            #self.health -= 10
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
@@ -255,6 +259,7 @@ class Jogador(pygame.sprite.Sprite):
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
                 self.rect.x -= dx
                 scroll = -dx
+            
         return scroll
 
     def check_alive(self):
@@ -367,29 +372,29 @@ while rodando == True:
             player.update_action(0)#0: idle
 
 
-    scroll = player.move(mover_esquerda,mover_direita) 
-    bg_scroll -= scroll
-    #MOVER A TELA 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            rodando = False 
-        #pressionar teclas
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                mover_esquerda = True
-            if event.key == pygame.K_RIGHT:
-                mover_direita = True
-            if event.key == pygame.K_UP: #pulo do personagem
-                player.jump_count = True
-            if event.key == pygame.K_SPACE:
-                player.ataque = True
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
-                mover_esquerda = False
-            if event.key == pygame.K_RIGHT:
-                mover_direita = False
-            if event.key == pygame.K_SPACE:
-                player.ataque = False
+        scroll = player.move(mover_esquerda,mover_direita) 
+        bg_scroll -= scroll
+        #MOVER A TELA 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                rodando = False 
+            #pressionar teclas
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    mover_esquerda = True
+                if event.key == pygame.K_RIGHT:
+                    mover_direita = True
+                if event.key == pygame.K_UP: #pulo do personagem
+                    player.jump_count = True
+                if event.key == pygame.K_SPACE:
+                    player.ataque = True
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    mover_esquerda = False
+                if event.key == pygame.K_RIGHT:
+                    mover_direita = False
+                if event.key == pygame.K_SPACE:
+                    player.ataque = False
 
     pygame.display.update()
 
