@@ -5,7 +5,6 @@ import os
 import random
 from os.path import isfile,join
 from life import HealthBar
-from potion import Potion
 
 largura = 1500
 altura = 640
@@ -24,7 +23,7 @@ SCROLL_THRESH = 300
 GRAVITY = 0.1
 
 ############### FABY ####################
-#variaveis scroll
+
 esquerda = False
 direita = False
 scroll = 0
@@ -106,7 +105,7 @@ class World():
                         enemy = Jogador('enemy', x * tamanho, y * tamanho,1, 2.00)
                         enemy_group.add(enemy)
                     elif tile == 9:
-                        cure_potion = Potion(img, x * tamanho, y * tamanho,tamanho)
+                        cure_potion = Potion(img, x * tamanho, y * tamanho)
                         cure_potion_group.add(cure_potion)
 
         return player, health_bar
@@ -139,6 +138,7 @@ class Jogador(pygame.sprite.Sprite):
         self.height = 120
         ####
         self.health = 100
+        self.max_health = 100
         self.action = 0
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
@@ -226,7 +226,6 @@ class Jogador(pygame.sprite.Sprite):
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0      
                 if self.char_type == 'enemy':
-                        print("oi")
                         self.virar *= -1
                         self.walkCount = 0
             
@@ -251,10 +250,6 @@ class Jogador(pygame.sprite.Sprite):
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
-        #check collision with health potion
-        if pygame.sprite.spritecollide(self, cure_potion_group, False):
-            self.health = 0
-        
         #update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
@@ -306,6 +301,22 @@ class Water(pygame.sprite.Sprite):
 	def update(self):
 		self.rect.x += scroll
 
+class Potion(pygame.sprite.Sprite):
+    def __init__(self,img, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.midtop = (x + tamanho // 2, y + (tamanho - self.image.get_height()))
+
+    def update(self):
+        self.rect.x += scroll
+        if pygame.sprite.collide_rect(self, player):
+            #check what kind of box it was
+                player.health += 25
+                if player.health > player.max_health:
+                    player.health = player.max_health
+                self.kill()
+
 #CRIAR GROUPS
 water_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
@@ -344,8 +355,9 @@ while rodando == True:
     water_group.update()
     water_group.draw(tela)
     
-    cure_potion_group.update(scroll)
+    cure_potion_group.update()
     cure_potion_group.draw(tela)
+
     if player.alive:
         if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
             player.update_action(1) #walk
