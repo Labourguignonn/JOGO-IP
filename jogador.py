@@ -124,7 +124,10 @@ class Jogador(pygame.sprite.Sprite):
     
     def attack(self):
         attacking_rect = pygame.Rect(self.rect.centerx, self.rect.y, 2* self.rect.width, self.rect.height)
-        pygame.draw.rect(tela, (0,255,0), attacking_rect)
+        pygame.draw_rect.rect(tela, (0,255,0), attacking_rect)
+
+    def draw_rect(self, surface):
+        pygame.draw.rect(surface, (255, 0, 0), self.rect)
 
 
     
