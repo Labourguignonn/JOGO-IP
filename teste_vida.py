@@ -59,7 +59,6 @@ WHITE = (250, 250, 250)
 GREEN = (144, 201, 120)
 
 
-font = pygame.font.SysFont('Futura', 30)
 
 def imagens():
     tela.fill(WHITE)
@@ -124,6 +123,10 @@ class Jogador(pygame.sprite.Sprite):
         ##self speed
         self.x_vel = vel
         self.y_vel = 0
+        ####EDICOES####
+        self.hit = False
+        self.tempo = 0
+        ########
         self.mask = None
         #####
         self.animation_list = []
@@ -145,6 +148,8 @@ class Jogador(pygame.sprite.Sprite):
         self.walkCount = 0
         self.idling = False
         self.idling_counter = 0
+        ###
+        self.count_enemies = 0
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -243,12 +248,25 @@ class Jogador(pygame.sprite.Sprite):
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
-        if pygame.sprite.spritecollide(player, enemy_group,True) and player.ataque == True:
-            if player.alive:
-                player.health -= 5
-            self.kill()
-        #if self.rect.bottom > altura:
-            #self.health -= 10
+        if pygame.sprite.spritecollideany(player, enemy_group):
+            enemy = pygame.sprite.spritecollideany(player, enemy_group)
+            if player.ataque == True: # se o jogador está atacando
+                if enemy.alive:
+                    enemy.health = 0 # mata o inimigo
+                    self.count_enemies += 1
+                enemy.tempo = 0 # reseta o tempo de contato
+            if player.ataque == False and enemy.alive:# se o jogador não está atacando
+                enemy.tempo += 1 # incrementa o tempo de contato
+                print(enemy.tempo)
+                if enemy.tempo >= 1000: # se o tempo de contato for maior ou igual a 1000
+                    if player.alive and enemy.alive:
+                        player.health -= 5 # toma dano
+                    enemy.hit = True
+        else: # se o jogador não colidiu com nenhum inimigo
+            for enemy in enemy_group:
+                enemy.tempo = 0 
+        if self.rect.bottom > altura:
+            self.health -= 10
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
@@ -268,30 +286,29 @@ class Jogador(pygame.sprite.Sprite):
             self.speed = 0
             self.alive = False
             self.update_action(3)
-    def ai(self):
-        if self.alive:
+
+    def ai(self): 
+        if self.alive: 
             if self.idling == False and random.randint(1, 100) == 1:
-                self.update_action(0)#0: idle
-                self.idling = True
-                self.idling_counter = 50
-            else:
-                if self.idling == False:
-                    if self.virar == 1:
-                        ai_moving_right = True
-                    else:
-                        ai_moving_right = False
-                    ai_moving_left = not ai_moving_right
-                    self.move(ai_moving_left, ai_moving_right)
-                    self.walkCount += 1
-
-                    if self.walkCount > tamanho:
-                        self.virar *= -1
-                        self.walkCount *= -1
-                else:
-                    self.idling_counter -= 1
-                    if self.idling_counter <= 0:
-                        self.idling = False
-
+                self.update_action(0)#0: idle 
+                self.idling = True 
+                self.idling_counter = 50 
+            else: 
+                if self.idling == False: 
+                    if self.virar == 1: 
+                        ai_moving_right = True 
+                    else: 
+                        ai_moving_right = False 
+                    ai_moving_left = not ai_moving_right 
+                    self.move(ai_moving_left, ai_moving_right) 
+                    self.walkCount += 1 
+                    if self.walkCount > tamanho: 
+                        self.virar *= -1 
+                        self.walkCount *= -1 
+                else: 
+                    self.idling_counter -= 1 
+                    if self.idling_counter <= 0: 
+                        self.idling = False 
         self.rect.x += scroll
     def draw(self):
 	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -342,6 +359,11 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 world = World()
 player, health_bar =  world.process_data(lista)
 
+font = pygame.font.SysFont('Futura', 30)
+texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,255))
+pos_texto = texto.get_rect()
+pos_texto.center = (1300,25)
+
 rodando = True
 while rodando == True:
     imagens()
@@ -362,6 +384,10 @@ while rodando == True:
     
     cure_potion_group.update()
     cure_potion_group.draw(tela)
+    ##TEXTO##
+    texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,255))
+    tela.blit(texto,pos_texto)
+
 
     if player.alive:
         if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
@@ -375,26 +401,26 @@ while rodando == True:
         scroll = player.move(mover_esquerda,mover_direita) 
         bg_scroll -= scroll
         #MOVER A TELA 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                rodando = False 
-            #pressionar teclas
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    mover_esquerda = True
-                if event.key == pygame.K_RIGHT:
-                    mover_direita = True
-                if event.key == pygame.K_UP: #pulo do personagem
-                    player.jump_count = True
-                if event.key == pygame.K_SPACE:
-                    player.ataque = True
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT:
-                    mover_esquerda = False
-                if event.key == pygame.K_RIGHT:
-                    mover_direita = False
-                if event.key == pygame.K_SPACE:
-                    player.ataque = False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            rodando = False 
+        #pressionar teclas
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                mover_esquerda = True
+            if event.key == pygame.K_RIGHT:
+                mover_direita = True
+            if event.key == pygame.K_UP: #pulo do personagem
+                player.jump_count = True
+            if event.key == pygame.K_SPACE:
+                player.ataque = True
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                mover_esquerda = False
+            if event.key == pygame.K_RIGHT:
+                mover_direita = False
+            if event.key == pygame.K_SPACE:
+                player.ataque = False
 
     pygame.display.update()
 
