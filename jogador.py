@@ -37,6 +37,8 @@ class Jogador(pygame.sprite.Sprite):
         self.fall_count = True
         self.jump_count = False
         self.ataque = False
+
+        self.attack_type = 0
         
     #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
     def move(self, dx, dy):
@@ -115,3 +117,14 @@ class Jogador(pygame.sprite.Sprite):
             self.mover_esquerda(PLAYER_VEL)
         if keys[pygame.K_RIGHT]:
             self.mover_direita(PLAYER_VEL)
+        
+        #attack
+        if keys[pygame.K_r]:
+            self.attack_type = 1
+    
+    def attack(self):
+        attacking_rect = pygame.Rect(self.rect.centerx, self.rect.y, 2* self.rect.width, self.rect.height)
+        pygame.draw.rect(tela, (0,255,0), attacking_rect)
+
+
+    
