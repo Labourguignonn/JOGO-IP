@@ -115,3 +115,4 @@ class Jogador(pygame.sprite.Sprite):
             self.mover_esquerda(PLAYER_VEL)
         if keys[pygame.K_RIGHT]:
             self.mover_direita(PLAYER_VEL)
+

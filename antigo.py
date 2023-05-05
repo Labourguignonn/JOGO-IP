@@ -2,9 +2,8 @@ import pygame
 import button
 import csv
 import os
-import random
 from os.path import isfile,join
-from life import HealthBar
+from enemies import enemy
 
 largura = 1500
 altura = 640
@@ -15,17 +14,15 @@ pygame.init()
 tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
-
 ################### LUCAS ###############################
 FPS = 60
 clock = pygame.time.Clock()
-PLAYER_VEL = 4
+PLAYER_VEL = 3
 SCROLL_THRESH = 300
 GRAVITY = 0.1
-start_game = False
 
 ############### FABY ####################
-
+#variaveis scrool
 esquerda = False
 direita = False
 scroll = 0
@@ -39,7 +36,7 @@ tamanho = altura // rows
 level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 10
+tipo = 9
 current_tile = 0
 mover_esquerda = False
 mover_direita = False
@@ -54,12 +51,6 @@ for x in range(tipo):
     img = pygame.transform.scale(img, (tamanho, tamanho))
     img_lista.append(img)
 
-###load botão start##
-start_img = pygame.image.load('start.png').convert_alpha()
-start_img = pygame.transform.scale(start_img, (200, 100))
-#bg = pygame.image.load('BG.jpg').convert_alpha()
-#bg = pygame.transform.scale(bg, (1000, 580))
-
 
 #DEFINIR CORES 
 BLACK = (0, 0, 0)
@@ -67,6 +58,7 @@ WHITE = (250, 250, 250)
 GREEN = (144, 201, 120)
 
 
+font = pygame.font.SysFont('Futura', 30)
 
 def imagens():
     tela.fill(WHITE)
@@ -77,8 +69,6 @@ def imagens():
 
 def reset_level():
     water_group.empty()
-    enemy_group.empty()
-    cure_potion_group.empty()
     data = []
     for row in range(rows):
         r = [-1]*colunas_max
@@ -100,22 +90,17 @@ class World():
                     img_rect.x = x * tamanho
                     img_rect.y = y * tamanho
                     tile_data = (img, img_rect)
-                    if tile == 0 or tile == 1 or tile == 2 or tile == 4 or tile == 5 or tile == 8:
+                    if tile == 0 or tile == 2 or tile == 4 or tile == 5 or tile == 1:
                         self.lista_obstaculos.append(tile_data)
-                    elif tile == 3: 
+                    if tile == 3: 
                         water = Water(img, x * tamanho, y * tamanho)
                         water_group.add(water)
-                    elif tile == 6:
+                    if tile == 7 or tile == 8:
+                        pass #inimigos
+                    if tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
-                        health_bar = HealthBar(10, 10, player.health, player.health)
-                    elif tile == 7:
-                        enemy = Jogador('enemy', x * tamanho, y * tamanho,1, 2.00)
-                        enemy_group.add(enemy)
-                    elif tile == 9:
-                        cure_potion = Potion(img, x * tamanho, y * tamanho)
-                        cure_potion_group.add(cure_potion)
 
-        return player, health_bar, enemy
+        return player
     def draw(self):
         for tile in self.lista_obstaculos:
             tile[1][0] += scroll
@@ -126,17 +111,10 @@ class Jogador(pygame.sprite.Sprite):
     #INICIO DAS VARIAVEIS PRINCIPAIS
     def __init__(self, char_type, x, y,vel, scale):
         pygame.sprite.Sprite.__init__(self)
-        self.alive = True
         self.char_type = char_type
         ##self speed
         self.x_vel = vel
         self.y_vel = 0
-        ####EDICOES####
-        self.hit = False
-        self.damage_timer = 1000
-        self.tempo = 0
-        self.hurt = False
-        ########
         self.mask = None
         #####
         self.animation_list = []
@@ -150,16 +128,9 @@ class Jogador(pygame.sprite.Sprite):
         self.width = 55
         self.height = 120
         ####
-        self.health = 100
-        self.max_health = 100
         self.action = 0
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
-        self.walkCount = 0
-        self.idling = False
-        self.idling_counter = 0
-        ###
-        self.total_enemies = 15
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -167,9 +138,9 @@ class Jogador(pygame.sprite.Sprite):
             #reset temporary list of images
             temp_list = []
             #count number of files in the folder
-            numero_frames = len(os.listdir(f'img/{self.char_type}/{animation}'))
+            numero_frames = len(os.listdir(f'personagem/{animation}'))
             for i in range(numero_frames):
-                img = pygame.image.load(f'img/{self.char_type}/{animation}/{i}.png').convert_alpha()
+                img = pygame.image.load(f'personagem/{animation}/{i}.png').convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
@@ -183,12 +154,10 @@ class Jogador(pygame.sprite.Sprite):
     
     def update(self):
         self.update_animation()
-        self.check_alive()
-
 
     def update_animation(self):
         #update animation
-        ANIMATION_DELAY = 100
+        ANIMATION_DELAY = 130
         #update image depending on current frame
         self.image = self.animation_list[self.action][self.frame_index]
         #check if enough time has passed since the last update
@@ -198,7 +167,7 @@ class Jogador(pygame.sprite.Sprite):
         #if the animation has run out the reset back to the start
         if self.frame_index >= len(self.animation_list[self.action]):
             if self.action == 3:
-                self.frame_index = len(self.animation_list[self.action]) - 1       
+                self.frame_index = len(self.animation_list[self.action]) - 1
             else:
                 self.frame_index = 0
                 
@@ -223,13 +192,12 @@ class Jogador(pygame.sprite.Sprite):
         if mover_direita:
           dx = self.x_vel
           self.flip = False
-          self.virar = 1 
+          self.virar = 1
 
         if self.jump_count == True and self.fall == False:
           self.y_vel = -4
           self.jump_count = False
           self.fall = True
-        
         
         self.y_vel += GRAVITY
         if self.y_vel > 10:
@@ -242,7 +210,7 @@ class Jogador(pygame.sprite.Sprite):
         for tile in world.lista_obstaculos:
             #check collision in the x direction
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0  
+                dx = 0      
             
             if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
                     #check if below the ground, i.e. jumping
@@ -258,69 +226,28 @@ class Jogador(pygame.sprite.Sprite):
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
-
-        if pygame.sprite.spritecollideany(player, enemy_group): 
-                enemy = pygame.sprite.spritecollideany(player, enemy_group) 
-                if player.ataque == True and enemy.alive: 
-                    if enemy.alive: 
-                        enemy.health = 0 
-                        enemy.update_action(4) 
-                        enemy.total_enemies -= 1 
-                else: # se o jogador não está atacando 
-                    if enemy.alive:
-                        self.hurt = True
-                        current_time = pygame.time.get_ticks() # obtém o tempo atual em milissegundos
-                        if current_time - player.damage_timer > 1000: # se passou mais de um segundo desde o último dano
-                            if player.alive: 
-                                player.health -= 5 # toma dano 
-                            player.damage_timer = current_time # atualiza o temporizador de dano
-        else:
-            self.hurt = False
-
-        #se cair em um buraco
-        if self.rect.bottom > altura:
-            self.health = 0
-                        
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
+
         #update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
                 self.rect.x -= dx
                 scroll = -dx
-            
         return scroll
-    def enemy_move(self): 
-        if self.alive and player.alive: 
-            if self.virar == 1:
-                enemy_moving_right = True
-            else:
-                enemy_moving_right = False
-            enemy_moving_left = not enemy_moving_right
-            self.move(enemy_moving_left, enemy_moving_right)
-            self.update_action(1)
-            self.walkCount += 1
-            if self.walkCount > 60: ##esse valor delimita o lugar até onde ele vai 
-                self.virar *= -1
-                self.walkCount *= -1
-
-        self.rect.x += scroll
 
 
-          
-    def check_alive(self):
-        if self.health <= 0:
-            self.health = 0
-            self.speed = 0
-            self.alive = False
-            self.update_action(3)
-
+    def atacar(self):
+        if self.ataque == False:
+            self.ataque = True 
+    
     def draw(self):
 	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
-  
+
+    
 class Water(pygame.sprite.Sprite):
 	def __init__(self, img, x, y):
 		pygame.sprite.Sprite.__init__(self)
@@ -331,30 +258,8 @@ class Water(pygame.sprite.Sprite):
 	def update(self):
 		self.rect.x += scroll
 
-class Potion(pygame.sprite.Sprite):
-    def __init__(self,img, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = img
-        self.rect = self.image.get_rect()
-        self.rect.midtop = (x + tamanho // 2, y + (tamanho - self.image.get_height()))
-
-    def update(self):
-        self.rect.x += scroll
-        if pygame.sprite.collide_rect(self, player):
-            #check what kind of box it was
-                player.health += 25
-                if player.health > player.max_health:
-                    player.health = player.max_health
-                self.kill()
-
 #CRIAR GROUPS
 water_group = pygame.sprite.Group()
-enemy_group = pygame.sprite.Group()
-cure_potion_group = pygame.sprite.Group()
-
-#criar botões
-start_button = button.Button(largura // 2 - 130, altura // 2 - 150, start_img, 1)
-
 #World data
 lista = []
 for row in range(rows):
@@ -368,66 +273,31 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 			lista[x][y] = int(tile)
                         
 world = World()
-player, health_bar,enemy =  world.process_data(lista)
-
-font = pygame.font.SysFont('Futura', 30)
-texto = font.render(f"INIMIGOS RESTANTES: {enemy.total_enemies}", True, (255,255,255))
-pos_texto = texto.get_rect()
-pos_texto.center = (1300,25)
-
-###MUSICA#####
-musica_de_fundo =pygame.mixer.music.load('background_music.mp3')
-pygame.mixer.music.play(-1)
-
+player =  world.process_data(lista)
+rato = enemy(1000, 496, 32, 32, 1300)
 rodando = True
 while rodando == True:
-    if start_game == False:
-        tela.fill(BLACK)
+    imagens()
+    world.draw()
+    clock.tick(FPS)
 
-        if start_button.draw(tela):
-            start_game = True
+    player.update()
+    player.draw() 
+    rato.draw(tela)
+
+    water_group.update()
+    water_group.draw(tela)
+    
+    if (mover_direita or mover_esquerda) and player.fall == False:
+        player.update_action(1) #walk
     else:
-        imagens()
-        world.draw()
-        clock.tick(FPS)
-        health_bar.draw(player.health)
-        player.update()
-        player.draw() 
-
-        for enemy in enemy_group:
-            enemy.update()
-            enemy.enemy_move()
-            enemy.draw()
+        player.update_action(0)#0: idle
 
 
-        water_group.update()
-        water_group.draw(tela)
-
-        cure_potion_group.update()
-        cure_potion_group.draw(tela)
-        ##TEXTO##
-        texto = font.render(f"INIMIGOS RESTANTES: {enemy.total_enemies}", True, (255,255,255))
-        pos_texto = texto.get_rect()
-        pos_texto.center = (1300,25)
-        tela.blit(texto,pos_texto)
-        ###MUSICA##
+    scroll = player.move(mover_esquerda,mover_direita) 
+    bg_scroll -= scroll
 
 
-        if player.alive:
-            if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False and player.hurt == False:
-                player.update_action(1) #walk
-            elif player.ataque:
-                player.update_action(2) #attack
-            elif player.hurt:
-                player.update_action(4) #hurt
-            else:
-                player.update_action(0)#0: idle
-
-
-            scroll = player.move(mover_esquerda,mover_direita) 
-            bg_scroll -= scroll
-        else:
-            scroll = 0
         #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -441,14 +311,12 @@ while rodando == True:
             if event.key == pygame.K_UP: #pulo do personagem
                 player.jump_count = True
             if event.key == pygame.K_SPACE:
-                player.ataque = True
+                player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 mover_esquerda = False
             if event.key == pygame.K_RIGHT:
                 mover_direita = False
-            if event.key == pygame.K_SPACE:
-                player.ataque = False
 
     pygame.display.update()
 
