@@ -2,10 +2,10 @@ import pygame
 import button
 import csv
 import os
+import random
 from os.path import isfile,join
 from life import HealthBar
 from potion import Potion
-from enemies import Enemy
 
 largura = 1500
 altura = 640
@@ -24,7 +24,7 @@ SCROLL_THRESH = 300
 GRAVITY = 0.1
 
 ############### FABY ####################
-#variaveis scrool
+#variaveis scroll
 esquerda = False
 direita = False
 scroll = 0
@@ -103,7 +103,7 @@ class World():
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
                         health_bar = HealthBar(10, 10, player.health, player.health)
                     elif tile == 7:
-                        enemy = Enemy('enemy',img, x * tamanho, y *tamanho, 1300)
+                        enemy = Jogador('enemy', x * tamanho, y * tamanho,1, 2.00)
                         enemy_group.add(enemy)
                     elif tile == 9:
                         cure_potion = Potion(img, x * tamanho, y * tamanho,tamanho)
@@ -120,6 +120,7 @@ class Jogador(pygame.sprite.Sprite):
     #INICIO DAS VARIAVEIS PRINCIPAIS
     def __init__(self, char_type, x, y,vel, scale):
         pygame.sprite.Sprite.__init__(self)
+        self.alive = True
         self.char_type = char_type
         ##self speed
         self.x_vel = vel
@@ -142,6 +143,8 @@ class Jogador(pygame.sprite.Sprite):
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
         self.walkCount = 0
+        self.idling = False
+        self.idling_counter = 0
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -165,6 +168,7 @@ class Jogador(pygame.sprite.Sprite):
     
     def update(self):
         self.update_animation()
+        self.check_alive()
 
     def update_animation(self):
         #update animation
@@ -222,7 +226,7 @@ class Jogador(pygame.sprite.Sprite):
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0      
                 if self.char_type == 'enemy':
-                        print("inimigo")
+                        print("oi")
                         self.virar *= -1
                         self.walkCount = 0
             
@@ -249,7 +253,7 @@ class Jogador(pygame.sprite.Sprite):
         self.rect.y += dy
         #check collision with health potion
         if pygame.sprite.spritecollide(self, cure_potion_group, False):
-            self.health += 25
+            self.health = 0
         
         #update scroll based on player position
         if self.char_type == 'player':
@@ -257,11 +261,41 @@ class Jogador(pygame.sprite.Sprite):
                 self.rect.x -= dx
                 scroll = -dx
         return scroll
-    
+
+    def check_alive(self):
+        if self.health <= 0:
+            self.health = 0
+            self.speed = 0
+            self.alive = False
+            self.update_action(3)
+    def ai(self):
+        if self.alive:
+            if self.idling == False and random.randint(1, 100) == 1:
+                self.update_action(0)#0: idle
+                self.idling = True
+                self.idling_counter = 50
+            else:
+                if self.idling == False:
+                    if self.virar == 1:
+                        ai_moving_right = True
+                    else:
+                        ai_moving_right = False
+                    ai_moving_left = not ai_moving_right
+                    self.move(ai_moving_left, ai_moving_right)
+                    self.walkCount += 1
+
+                    if self.walkCount > tamanho:
+                        self.virar *= -1
+                        self.walkCount *= -1
+                else:
+                    self.idling_counter -= 1
+                    if self.idling_counter <= 0:
+                        self.idling = False
+
+        self.rect.x += scroll
     def draw(self):
 	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
-
-    
+  
 class Water(pygame.sprite.Sprite):
 	def __init__(self, img, x, y):
 		pygame.sprite.Sprite.__init__(self)
@@ -302,8 +336,9 @@ while rodando == True:
     player.draw() 
 
     for enemy in enemy_group:
-        enemy.update(scroll)
-        enemy.draw(tela)
+        enemy.update()
+        enemy.ai()
+        enemy.draw()
 
 
     water_group.update()
@@ -311,13 +346,13 @@ while rodando == True:
     
     cure_potion_group.update(scroll)
     cure_potion_group.draw(tela)
-    
-    if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
-        player.update_action(1) #walk
-    elif player.ataque:
-        player.update_action(2) #attack
-    else:
-        player.update_action(0)#0: idle
+    if player.alive:
+        if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
+            player.update_action(1) #walk
+        elif player.ataque:
+            player.update_action(2) #attack
+        else:
+            player.update_action(0)#0: idle
 
 
     scroll = player.move(mover_esquerda,mover_direita) 
