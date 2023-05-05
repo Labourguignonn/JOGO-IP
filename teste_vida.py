@@ -108,14 +108,14 @@ class World():
                     elif tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
                         health_bar = HealthBar(10, 10, player.health, player.health)
-                    elif tile == 7 or tile == 8:
+                    elif tile == 7:
                         enemy = Jogador('enemy', x * tamanho, y * tamanho,1, 2.00)
                         enemy_group.add(enemy)
                     elif tile == 9:
                         cure_potion = Potion(img, x * tamanho, y * tamanho)
                         cure_potion_group.add(cure_potion)
 
-        return player, health_bar
+        return player, health_bar, enemy
     def draw(self):
         for tile in self.lista_obstaculos:
             tile[1][0] += scroll
@@ -133,8 +133,9 @@ class Jogador(pygame.sprite.Sprite):
         self.y_vel = 0
         ####EDICOES####
         self.hit = False
-        self.damage_timer = 500
+        self.damage_timer = 1000
         self.tempo = 0
+        self.hurt = False
         ########
         self.mask = None
         #####
@@ -158,7 +159,7 @@ class Jogador(pygame.sprite.Sprite):
         self.idling = False
         self.idling_counter = 0
         ###
-        self.count_enemies = 0
+        self.total_enemies = 15
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -184,9 +185,10 @@ class Jogador(pygame.sprite.Sprite):
         self.update_animation()
         self.check_alive()
 
+
     def update_animation(self):
         #update animation
-        ANIMATION_DELAY = 130
+        ANIMATION_DELAY = 100
         #update image depending on current frame
         self.image = self.animation_list[self.action][self.frame_index]
         #check if enough time has passed since the last update
@@ -216,10 +218,12 @@ class Jogador(pygame.sprite.Sprite):
         if mover_esquerda:
           dx = -self.x_vel
           self.flip = True 
+          self.virar = -1
 
         if mover_direita:
           dx = self.x_vel
           self.flip = False
+          self.virar = 1 
 
         if self.jump_count == True and self.fall == False:
           self.y_vel = -4
@@ -238,10 +242,7 @@ class Jogador(pygame.sprite.Sprite):
         for tile in world.lista_obstaculos:
             #check collision in the x direction
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0      
-                if self.char_type == 'enemy':
-                        self.virar *= -1
-                        self.walkCount = 0
+                dx = 0  
             
             if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
                     #check if below the ground, i.e. jumping
@@ -257,21 +258,29 @@ class Jogador(pygame.sprite.Sprite):
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
-        if pygame.sprite.spritecollideany(player, enemy_group):
-            enemy = pygame.sprite.spritecollideany(player, enemy_group)
-            if player.ataque == True: # se o jogador está atacando
-                if enemy.alive:
-                    enemy.health = 0 # mata o inimigo
-                    self.count_enemies += 1
-            if player.ataque == False and enemy.alive:# se o jogador não está atacando
-                current_time = pygame.time.get_ticks () # obtém o tempo atual em milissegundos
-                if current_time - player.damage_timer > 500: # se passou mais de meio segundo desde o último dano
-                    if player.alive and enemy.alive:
-                        player.health -= 5 # toma dano
-                    player.damage_timer = current_time # atualiza o temporizador de dano
-                enemy.hit = True
+
+        if pygame.sprite.spritecollideany(player, enemy_group): 
+                enemy = pygame.sprite.spritecollideany(player, enemy_group) 
+                if player.ataque == True and enemy.alive: 
+                    if enemy.alive: 
+                        enemy.health = 0 
+                        enemy.update_action(4) 
+                        enemy.total_enemies -= 1 
+                else: # se o jogador não está atacando 
+                    if enemy.alive:
+                        self.hurt = True
+                        current_time = pygame.time.get_ticks() # obtém o tempo atual em milissegundos
+                        if current_time - player.damage_timer > 1000: # se passou mais de um segundo desde o último dano
+                            if player.alive: 
+                                player.health -= 5 # toma dano 
+                            player.damage_timer = current_time # atualiza o temporizador de dano
+        else:
+            self.hurt = False
+
+        #se cair em um buraco
         if self.rect.bottom > altura:
-            self.health -= 10
+            self.health = 0
+                        
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
@@ -284,7 +293,24 @@ class Jogador(pygame.sprite.Sprite):
                 scroll = -dx
             
         return scroll
+    def enemy_move(self): 
+        if self.alive and player.alive: 
+            if self.virar == 1:
+                enemy_moving_right = True
+            else:
+                enemy_moving_right = False
+            enemy_moving_left = not enemy_moving_right
+            self.move(enemy_moving_left, enemy_moving_right)
+            self.update_action(1)
+            self.walkCount += 1
+            if self.walkCount > 60: ##esse valor delimita o lugar até onde ele vai 
+                self.virar *= -1
+                self.walkCount *= -1
 
+        self.rect.x += scroll
+
+
+          
     def check_alive(self):
         if self.health <= 0:
             self.health = 0
@@ -292,29 +318,6 @@ class Jogador(pygame.sprite.Sprite):
             self.alive = False
             self.update_action(3)
 
-    def ai(self): 
-        if self.alive: 
-            if self.idling == False and random.randint(1, 100) == 1:
-                self.update_action(0)#0: idle 
-                self.idling = True 
-                self.idling_counter = 50 
-            else: 
-                if self.idling == False: 
-                    if self.virar == 1: 
-                        ai_moving_right = True 
-                    else: 
-                        ai_moving_right = False 
-                    ai_moving_left = not ai_moving_right 
-                    self.move(ai_moving_left, ai_moving_right) 
-                    self.walkCount += 1 
-                    if self.walkCount > tamanho: 
-                        self.virar *= -1 
-                        self.walkCount *= -1 
-                else: 
-                    self.idling_counter -= 1 
-                    if self.idling_counter <= 0: 
-                        self.idling = False 
-        self.rect.x += scroll
     def draw(self):
 	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
   
@@ -365,10 +368,10 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 			lista[x][y] = int(tile)
                         
 world = World()
-player, health_bar =  world.process_data(lista)
+player, health_bar,enemy =  world.process_data(lista)
 
 font = pygame.font.SysFont('Futura', 30)
-texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,255))
+texto = font.render(f"INIMIGOS RESTANTES: {enemy.total_enemies}", True, (255,255,255))
 pos_texto = texto.get_rect()
 pos_texto.center = (1300,25)
 
@@ -393,7 +396,7 @@ while rodando == True:
 
         for enemy in enemy_group:
             enemy.update()
-            enemy.ai()
+            enemy.enemy_move()
             enemy.draw()
 
 
@@ -403,22 +406,28 @@ while rodando == True:
         cure_potion_group.update()
         cure_potion_group.draw(tela)
         ##TEXTO##
-        texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,255))
+        texto = font.render(f"INIMIGOS RESTANTES: {enemy.total_enemies}", True, (255,255,255))
+        pos_texto = texto.get_rect()
+        pos_texto.center = (1300,25)
         tela.blit(texto,pos_texto)
         ###MUSICA##
 
 
         if player.alive:
-            if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
+            if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False and player.hurt == False:
                 player.update_action(1) #walk
             elif player.ataque:
                 player.update_action(2) #attack
+            elif player.hurt:
+                player.update_action(4) #hurt
             else:
                 player.update_action(0)#0: idle
 
 
             scroll = player.move(mover_esquerda,mover_direita) 
             bg_scroll -= scroll
+        else:
+            scroll = 0
         #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
