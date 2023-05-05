@@ -15,12 +15,14 @@ pygame.init()
 tela = pygame.display.set_mode((largura, altura))
 pygame.display.set_caption('Após a enchente')
 
+
 ################### LUCAS ###############################
 FPS = 60
 clock = pygame.time.Clock()
 PLAYER_VEL = 4
 SCROLL_THRESH = 300
 GRAVITY = 0.1
+start_game = False
 
 ############### FABY ####################
 
@@ -51,6 +53,12 @@ for x in range(tipo):
     img = pygame.image.load(f'img/{x}.png').convert_alpha()
     img = pygame.transform.scale(img, (tamanho, tamanho))
     img_lista.append(img)
+
+###load botão start##
+start_img = pygame.image.load('start.png').convert_alpha()
+start_img = pygame.transform.scale(start_img, (200, 100))
+#bg = pygame.image.load('BG.jpg').convert_alpha()
+#bg = pygame.transform.scale(bg, (1000, 580))
 
 
 #DEFINIR CORES 
@@ -125,6 +133,7 @@ class Jogador(pygame.sprite.Sprite):
         self.y_vel = 0
         ####EDICOES####
         self.hit = False
+        self.damage_timer = 500
         self.tempo = 0
         ########
         self.mask = None
@@ -254,17 +263,13 @@ class Jogador(pygame.sprite.Sprite):
                 if enemy.alive:
                     enemy.health = 0 # mata o inimigo
                     self.count_enemies += 1
-                enemy.tempo = 0 # reseta o tempo de contato
             if player.ataque == False and enemy.alive:# se o jogador não está atacando
-                enemy.tempo += 1 # incrementa o tempo de contato
-                print(enemy.tempo)
-                if enemy.tempo >= 1000: # se o tempo de contato for maior ou igual a 1000
+                current_time = pygame.time.get_ticks () # obtém o tempo atual em milissegundos
+                if current_time - player.damage_timer > 500: # se passou mais de meio segundo desde o último dano
                     if player.alive and enemy.alive:
                         player.health -= 5 # toma dano
-                    enemy.hit = True
-        else: # se o jogador não colidiu com nenhum inimigo
-            for enemy in enemy_group:
-                enemy.tempo = 0 
+                    player.damage_timer = current_time # atualiza o temporizador de dano
+                enemy.hit = True
         if self.rect.bottom > altura:
             self.health -= 10
         if self.char_type == 'player':
@@ -344,6 +349,9 @@ water_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 cure_potion_group = pygame.sprite.Group()
 
+#criar botões
+start_button = button.Button(largura // 2 - 130, altura // 2 - 150, start_img, 1)
+
 #World data
 lista = []
 for row in range(rows):
@@ -364,42 +372,53 @@ texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,2
 pos_texto = texto.get_rect()
 pos_texto.center = (1300,25)
 
+###MUSICA#####
+musica_de_fundo =pygame.mixer.music.load('background_music.mp3')
+pygame.mixer.music.play(-1)
+
 rodando = True
 while rodando == True:
-    imagens()
-    world.draw()
-    clock.tick(FPS)
-    health_bar.draw(player.health)
-    player.update()
-    player.draw() 
+    if start_game == False:
+        tela.fill(BLACK)
 
-    for enemy in enemy_group:
-        enemy.update()
-        enemy.ai()
-        enemy.draw()
+        if start_button.draw(tela):
+            start_game = True
+    else:
+        imagens()
+        world.draw()
+        clock.tick(FPS)
+        health_bar.draw(player.health)
+        player.update()
+        player.draw() 
 
-
-    water_group.update()
-    water_group.draw(tela)
-    
-    cure_potion_group.update()
-    cure_potion_group.draw(tela)
-    ##TEXTO##
-    texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,255))
-    tela.blit(texto,pos_texto)
+        for enemy in enemy_group:
+            enemy.update()
+            enemy.ai()
+            enemy.draw()
 
 
-    if player.alive:
-        if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
-            player.update_action(1) #walk
-        elif player.ataque:
-            player.update_action(2) #attack
-        else:
-            player.update_action(0)#0: idle
+        water_group.update()
+        water_group.draw(tela)
+
+        cure_potion_group.update()
+        cure_potion_group.draw(tela)
+        ##TEXTO##
+        texto = font.render(f"INIMIGOS MORTOS: {player.count_enemies}", True, (255,255,255))
+        tela.blit(texto,pos_texto)
+        ###MUSICA##
 
 
-        scroll = player.move(mover_esquerda,mover_direita) 
-        bg_scroll -= scroll
+        if player.alive:
+            if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
+                player.update_action(1) #walk
+            elif player.ataque:
+                player.update_action(2) #attack
+            else:
+                player.update_action(0)#0: idle
+
+
+            scroll = player.move(mover_esquerda,mover_direita) 
+            bg_scroll -= scroll
         #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
