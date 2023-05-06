@@ -57,6 +57,9 @@ for x in range(tipo):
 ###load botão start##
 start_img = pygame.image.load('start.png').convert_alpha()
 start_img = pygame.transform.scale(start_img, (200, 100))
+###load botão start##
+tips_img = pygame.image.load('botao_dicas.png').convert_alpha()
+tips_img = pygame.transform.scale(tips_img, (200, 100))
 #bg = pygame.image.load('BG.jpg').convert_alpha()
 #bg = pygame.transform.scale(bg, (1000, 580))
 
@@ -353,7 +356,9 @@ enemy_group = pygame.sprite.Group()
 cure_potion_group = pygame.sprite.Group()
 
 #criar botões
-start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
+# start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
+start_button = button.Button(largura // 2 - 220, altura // 2 + 150 , start_img, 1)
+tips_button = button.Button(largura // 2 + 20, altura // 2 + 150 , tips_img, 1)
 
 #World data
 lista = []
@@ -380,9 +385,11 @@ musica_de_fundo =pygame.mixer.music.load('background_music.mp3')
 pygame.mixer.music.play(-1)
 
 rodando = True
+showing_game_history = True
 while rodando == True:
-    showing_game_history = True
+    
     if start_game == False:
+        
         tela.fill(BLACK)
         
         ###Carrega nome do jogo
@@ -408,8 +415,41 @@ while rodando == True:
                 text_rect_description.center = (largura // 2, altura // 2 + spacing)
                 tela.blit(text,text_rect_description)
         else:
-            ''
-    
+            
+            mensagens = {
+                '0':('Água de Leptospirose é morte instantânea!', 'aguaVenenosa', (1000, 225)),
+                '1':('Movimentação e ataque em ', 'potion', (875,280)),
+                '2':('Ache a poção e recupere vida!', 'potion', (940,333)),
+                '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!')
+            }
+            
+            spacing = -125
+            for mensagem in mensagens.values():
+
+                spacing += 55
+                text = font.render(mensagem[0], True, WHITE, BLACK)
+                text_rect_description = text.get_rect()
+                text_rect_description.center = (largura // 2, altura // 2 + spacing)
+                tela.blit(text,text_rect_description)
+
+                #carrega imagem
+                try:
+                    img_menu = pygame.image.load(f'menu_img/{mensagem[1]}.png').convert_alpha()
+                    img_menu = pygame.transform.scale(img_menu, (50, 50))
+                    tela.blit(img_menu, mensagem[2])
+                except:
+                    pass
+            
+
+
+        if showing_game_history == True and  tips_button.draw(tela):
+            showing_game_history = False
+            print('entrou na 1')
+
+        elif showing_game_history == False and tips_button.draw(tela):
+            showing_game_history = True
+            print('entrou na 2')
+
         if start_button.draw(tela):
             start_game = True
     else:
