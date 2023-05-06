@@ -353,7 +353,7 @@ enemy_group = pygame.sprite.Group()
 cure_potion_group = pygame.sprite.Group()
 
 #criar botões
-start_button = button.Button(largura // 2 - 130, altura // 2 - 150, start_img, 1)
+start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
 
 #World data
 lista = []
@@ -381,9 +381,35 @@ pygame.mixer.music.play(-1)
 
 rodando = True
 while rodando == True:
+    showing_game_history = True
     if start_game == False:
         tela.fill(BLACK)
+        
+        ###Carrega nome do jogo
+        font_title = pygame.font.Font('freesansbold.ttf', 46)
+        text = font_title.render('Após a enchente', True, WHITE, BLACK)
+        text_rect_title = text.get_rect()
+        text_rect_title.center = (largura // 2, altura // 2 - 150)
+        tela.blit(text,text_rect_title)
 
+        #Se tiver mostrando a história
+        if showing_game_history == True:
+            mensagens = [
+                'Durante um período de chuva muito forte em Recife a UFPE sofreu um perigoso alagamento!',
+                'Era tudo o que a legião de ratos escondidos nos esgotos do CIn precisava',
+                'para invadir e sequestrar a tia Edilene a fim de conseguir acesso a todo o CIn',
+                'Ajude Lucas a matar o máximo de ratos no subsolo do Centro de Informática'
+            ]
+            spacing = -95
+            for mensagem in mensagens:
+                spacing += 45
+                text = font.render(mensagem, True, WHITE, BLACK)
+                text_rect_description = text.get_rect()
+                text_rect_description.center = (largura // 2, altura // 2 + spacing)
+                tela.blit(text,text_rect_description)
+        else:
+            ''
+    
         if start_button.draw(tela):
             start_game = True
     else:
