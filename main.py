@@ -418,9 +418,9 @@ while rodando == True:
             
             mensagens = {
                 '0':('Água de Leptospirose é morte instantânea!', 'aguaVenenosa', (1000, 225)),
-                '1':('Movimentação e ataque em ', 'potion', (875,280)),
+                '1':('Movimentação e ataque em', 'potion', (875,280)),
                 '2':('Ache a poção e recupere vida!', 'potion', (940,333)),
-                '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!')
+                '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!', '3', (1150, 390))
             }
             
             spacing = -125
@@ -433,12 +433,11 @@ while rodando == True:
                 tela.blit(text,text_rect_description)
 
                 #carrega imagem
-                try:
-                    img_menu = pygame.image.load(f'menu_img/{mensagem[1]}.png').convert_alpha()
-                    img_menu = pygame.transform.scale(img_menu, (50, 50))
-                    tela.blit(img_menu, mensagem[2])
-                except:
-                    pass
+                
+                img_menu = pygame.image.load(f'menu_img/{mensagem[1]}.png').convert_alpha()
+                img_menu = pygame.transform.scale(img_menu, (50, 50))
+                tela.blit(img_menu, mensagem[2])
+                
             
 
 
