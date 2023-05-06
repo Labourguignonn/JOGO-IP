@@ -418,7 +418,7 @@ while rodando == True:
             
             mensagens = {
                 '0':('Água de Leptospirose é morte instantânea!', 'aguaVenenosa', (1000, 225)),
-                '1':('Movimentação e ataque em', 'potion', (875,280)),
+                '1':('Movimentação e ataque em           + Espaço', 'setasTeclado', (815,275)),
                 '2':('Ache a poção e recupere vida!', 'potion', (940,333)),
                 '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!', '3', (1150, 390))
             }
