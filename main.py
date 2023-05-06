@@ -387,10 +387,14 @@ pygame.mixer.music.play(-1)
 rodando = True
 showing_game_history = True
 while rodando == True:
-    
+        
     if start_game == False:
         
-        tela.fill(BLACK)
+        # tela.fill(BLACK)
+        menu_bg = pygame.image.load('menu_img/telaFundoMenu.png')
+        menu_bg = pygame.transform.scale(menu_bg, (largura + 100, altura + 100))
+        menu_bg.set_alpha(30)
+        tela.blit(menu_bg, (0,0))
         
         ###Carrega nome do jogo
         font_title = pygame.font.Font('freesansbold.ttf', 46)
@@ -417,10 +421,10 @@ while rodando == True:
         else:
             
             mensagens = {
-                '0':('Água de Leptospirose é morte instantânea!', 'aguaVenenosa', (1000, 225)),
+                '0':('Água de Leptospirose é morte instantânea!', 'aguaVenenosa', (1000, 225), (450, 225)),
                 '1':('Movimentação e ataque em           + espaço', 'setasTeclado', (815,275)),
-                '2':('Ache a poção e recupere vida!', 'potion', (915,333)),
-                '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!', '3', (1150, 390))
+                '2':('Ache a poção e recupere vida!', 'potion', (915,333), (540, 333)),
+                '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!', 'idlePerson', (1150, 390), (300, 390))
             }
             
             spacing = -125
@@ -433,14 +437,17 @@ while rodando == True:
                 tela.blit(text,text_rect_description)
 
                 #carrega imagem
-                
                 img_menu = pygame.image.load(f'menu_img/{mensagem[1]}.png').convert_alpha()
                 img_menu = pygame.transform.scale(img_menu, (50, 50))
                 tela.blit(img_menu, mensagem[2])
+
+                try:
+                    rotated_img = pygame.transform.flip(img_menu, True, False)
+                    tela.blit(rotated_img, mensagem[3])
+                except:
+                    pass
                 
             
-
-
         if showing_game_history == True and  tips_button.draw(tela):
             showing_game_history = False
             print('entrou na 1')
