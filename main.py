@@ -161,8 +161,6 @@ class Jogador(pygame.sprite.Sprite):
         self.walkCount = 0
         self.idling = False
         self.idling_counter = 0
-        ###
-        self.total_enemies = 15
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -265,10 +263,9 @@ class Jogador(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(player, enemy_group): 
                 enemy = pygame.sprite.spritecollideany(player, enemy_group) 
                 if player.ataque == True and enemy.alive: 
-                    if enemy.alive: 
-                        enemy.health = 0 
-                        enemy.update_action(4) 
-                        enemy.total_enemies -= 1 
+                    enemy.health = 0 
+                    enemy.update_action(4) 
+                    enemy_group.remove(enemy) 
                 else: # se o jogador não está atacando 
                     if enemy.alive:
                         self.hurt = True
@@ -296,6 +293,7 @@ class Jogador(pygame.sprite.Sprite):
                 scroll = -dx
             
         return scroll
+
     def enemy_move(self): 
         if self.alive and player.alive: 
             if self.virar == 1:
@@ -376,7 +374,7 @@ world = World()
 player, health_bar,enemy =  world.process_data(lista)
 
 font = pygame.font.SysFont('Futura', 30)
-texto = font.render(f"INIMIGOS RESTANTES: {enemy.total_enemies}", True, (255,255,255))
+texto = font.render(f"INIMIGOS RESTANTES: {len(enemy_group)-2}", True, (255,255,255))
 pos_texto = texto.get_rect()
 pos_texto.center = (1300,25)
 
@@ -482,7 +480,7 @@ while rodando == True:
         cure_potion_group.update()
         cure_potion_group.draw(tela)
         ##TEXTO##
-        texto = font.render(f"INIMIGOS RESTANTES: {enemy.total_enemies}", True, (255,255,255))
+        texto = font.render(f"INIMIGOS RESTANTES: {len(enemy_group)-2}", True, (255,255,255))
         pos_texto = texto.get_rect()
         pos_texto.center = (1300,25)
         tela.blit(texto,pos_texto)
