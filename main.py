@@ -55,11 +55,11 @@ for x in range(tipo):
     img_lista.append(img)
 
 ###load botão start##
-start_img = pygame.image.load('start.png').convert_alpha()
-start_img = pygame.transform.scale(start_img, (200, 100))
+start_img = pygame.image.load('botaoStartCanva.png').convert_alpha()
+start_img = pygame.transform.scale(start_img, (200, 200))
 ###load botão start##
-tips_img = pygame.image.load('botao_dicas.png').convert_alpha()
-tips_img = pygame.transform.scale(tips_img, (200, 100))
+tips_img = pygame.image.load('botaoMenuCanva.png').convert_alpha()
+tips_img = pygame.transform.scale(tips_img, (200, 200))
 #bg = pygame.image.load('BG.jpg').convert_alpha()
 #bg = pygame.transform.scale(bg, (1000, 580))
 
@@ -357,8 +357,8 @@ cure_potion_group = pygame.sprite.Group()
 
 #criar botões
 # start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
-start_button = button.Button(largura // 2 - 220, altura // 2 + 150 , start_img, 1)
-tips_button = button.Button(largura // 2 + 20, altura // 2 + 150 , tips_img, 1)
+start_button = button.Button(largura // 2 - 220, altura // 2 + 100 , start_img, 1)
+tips_button = button.Button(largura // 2 + 20, altura // 2 + 100 , tips_img, 1)
 
 #World data
 lista = []
@@ -391,10 +391,16 @@ while rodando == True:
     if start_game == False:
         
         # tela.fill(BLACK)
+
+        ###Carrega imagem de fundo Menu
         menu_bg = pygame.image.load('menu_img/telaFundoMenu.png')
         menu_bg = pygame.transform.scale(menu_bg, (largura + 100, altura + 100))
-        menu_bg.set_alpha(30)
+        menu_bg.set_alpha(30) #opacidade da tela
         tela.blit(menu_bg, (0,0))
+
+        content_table_menu_bg = pygame.image.load('menu_img\imageBlurMenu.png')
+        content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (1300, 1200))
+        tela.blit(content_table_menu_bg, (100,-100))
         
         ###Carrega nome do jogo
         font_title = pygame.font.Font('freesansbold.ttf', 46)
@@ -450,12 +456,10 @@ while rodando == True:
             
         if showing_game_history == True and  tips_button.draw(tela):
             showing_game_history = False
-            print('entrou na 1')
 
         elif showing_game_history == False and tips_button.draw(tela):
             showing_game_history = True
-            print('entrou na 2')
-
+        
         if start_button.draw(tela):
             start_game = True
     else:
