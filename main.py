@@ -62,6 +62,8 @@ tips_img = pygame.image.load('botaoMenuCanva.png').convert_alpha()
 tips_img = pygame.transform.scale(tips_img, (200, 200))
 #bg = pygame.image.load('BG.jpg').convert_alpha()
 #bg = pygame.transform.scale(bg, (1000, 580))
+restart_img = pygame.image.load('botaoRestartCanva.png').convert_alpha()
+restart_img = pygame.transform.scale(restart_img, (200, 200))
 
 
 #DEFINIR CORES 
@@ -355,6 +357,7 @@ cure_potion_group = pygame.sprite.Group()
 # start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
 start_button = button.Button(largura // 2 - 220, altura // 2 + 100 , start_img, 1)
 tips_button = button.Button(largura // 2 + 20, altura // 2 + 100 , tips_img, 1)
+restart_button = button.Button(largura // 2, altura // 2 + 50 , restart_img, 1)
 
 #World data
 lista = []
@@ -460,6 +463,7 @@ while rodando == True:
         if start_button.draw(tela):
             start_game = True
     else:
+        inimigos_vivos = len(enemy_group)-2
         imagens()
         world.draw()
         clock.tick(FPS)
@@ -479,7 +483,8 @@ while rodando == True:
         cure_potion_group.update()
         cure_potion_group.draw(tela)
         ##TEXTO##
-        texto = font.render(f"INIMIGOS RESTANTES: {len(enemy_group)-2}", True, (255,255,255))
+        inimigos_vivos = len(enemy_group)-2
+        texto = font.render(f"INIMIGOS RESTANTES: {inimigos_vivos}", True, (255,255,255))
         pos_texto = texto.get_rect()
         pos_texto.center = (1300,25)
         tela.blit(texto,pos_texto)
@@ -501,6 +506,17 @@ while rodando == True:
             bg_scroll -= scroll
         else:
             scroll = 0
+            if restart_button.draw(tela):
+                bg_scroll = 0
+                lista = reset_level()
+
+                with open(f'level{level}_data.csv', newline='') as csvfile:
+                    reader = csv.reader(csvfile, delimiter=',')
+                    for x, row in enumerate(reader):
+                        for y, tile in enumerate(row):
+                            lista[x][y] = int(tile)
+                world = World()
+                player, health_bar,enemy =  world.process_data(lista)
         #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
