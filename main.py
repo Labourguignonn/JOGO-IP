@@ -162,6 +162,7 @@ class Jogador(pygame.sprite.Sprite):
         self.walkCount = 0
         self.idling = False
         self.idling_counter = 0
+        self.enemies_left = True
 
 ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
@@ -183,9 +184,11 @@ class Jogador(pygame.sprite.Sprite):
         self.height = self.image.get_height()
     
     
-    def update(self):
+    def update(self, inimigos_restantes):
         self.update_animation()
         self.check_alive()
+        self.check_enemies_left(inimigos_restantes)
+        
 
 
     def update_animation(self):
@@ -311,7 +314,10 @@ class Jogador(pygame.sprite.Sprite):
                 self.walkCount *= -1
 
         self.rect.x += scroll
-          
+    def check_enemies_left(self, inimigos_restantes):
+        if inimigos_restantes == 0:
+            self.speed = 0
+            self.enemies_left = False
     def check_alive(self):
         if self.health <= 0:
             self.health = 0
@@ -464,16 +470,17 @@ while rodando == True:
         if start_button.draw(tela):
             start_game = True
     else:
-        
+        inimigos_vivos = len(enemy_group)-2
+
         imagens()
         world.draw()
         clock.tick(FPS)
         health_bar.draw(player.health)
-        player.update()
+        player.update(inimigos_vivos)
         player.draw() 
 
         for enemy in enemy_group:
-            enemy.update()
+            enemy.update(inimigos_vivos)
             enemy.enemy_move()
             enemy.draw()
 
@@ -484,16 +491,16 @@ while rodando == True:
         cure_potion_group.update()
         cure_potion_group.draw(tela)
         ##TEXTO##
-        inimigos_vivos = len(enemy_group)-2
+        
         texto = font.render(f"INIMIGOS RESTANTES: {inimigos_vivos}", True, (255,255,255))
         pos_texto = texto.get_rect()
         pos_texto.center = (1300,25)
         tela.blit(texto,pos_texto)
         ###MUSICA##
 
-        inimigos_vivos = len(enemy_group)-2
+        
 
-        if player.alive:
+        if player.alive and player.enemies_left:
             if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False and player.hurt == False:
                 player.update_action(1) #walk
             elif player.ataque:
@@ -503,17 +510,19 @@ while rodando == True:
             else:
                 player.update_action(0)#0: idle
 
-
+            
             scroll = player.move(mover_esquerda,mover_direita) 
             bg_scroll -= scroll
+           
+            # if inimigos_vivos == 0:
+
         if not player.alive or not inimigos_vivos:
             scroll = 0
+            player.update_action(0)
             if player.alive:
                 mensagem = 'Parabéns! O CIn está livre de ameaças!'
             else:
                 mensagem = 'Você morreu!'
-            
-            pygame.draw.rect(tela, BLACK, pygame.Rect(30, 30, 60, 60))
             
 
             font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
