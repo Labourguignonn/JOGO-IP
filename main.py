@@ -518,11 +518,14 @@ while rodando == True:
 
         if not player.alive or not inimigos_vivos:
             scroll = 0
-            player.update_action(0)
+            
+
             if player.alive:
+                player.update_action(0)
                 mensagem = 'Parabéns! O CIn está livre de ameaças!'
             else:
                 mensagem = 'Você morreu!'
+                
             
 
             font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
