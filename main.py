@@ -89,7 +89,6 @@ def reset_level():
 
     return data
 
-
 class World():
     def __init__(self):
         self.lista_obstaculos = []
@@ -266,13 +265,14 @@ class Jogador(pygame.sprite.Sprite):
                     enemy.health = 0 
                     enemy.update_action(4) 
                     enemy_group.remove(enemy) 
+
                 else: # se o jogador não está atacando 
                     if enemy.alive:
                         self.hurt = True
                         current_time = pygame.time.get_ticks() # obtém o tempo atual em milissegundos
                         if current_time - player.damage_timer > 1000: # se passou mais de um segundo desde o último dano
                             if player.alive: 
-                                player.health -= 5 # toma dano 
+                                player.health -= 20 # toma dano 
                             player.damage_timer = current_time # atualiza o temporizador de dano
         else:
             self.hurt = False
@@ -309,8 +309,6 @@ class Jogador(pygame.sprite.Sprite):
                 self.walkCount *= -1
 
         self.rect.x += scroll
-
-
           
     def check_alive(self):
         if self.health <= 0:
@@ -373,19 +371,20 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 world = World()
 player, health_bar,enemy =  world.process_data(lista)
 
-font = pygame.font.SysFont('Futura', 30)
+font = pygame.font.Font('Minecraftia-Regular.ttf', 18)
 texto = font.render(f"INIMIGOS RESTANTES: {len(enemy_group)-2}", True, (255,255,255))
 pos_texto = texto.get_rect()
 pos_texto.center = (1300,25)
 
 ###MUSICA#####
+pygame.mixer_music.set_volume(0.3)
 musica_de_fundo =pygame.mixer.music.load('background_music.mp3')
 pygame.mixer.music.play(-1)
 
 rodando = True
 showing_game_history = True
-while rodando == True:
-        
+while rodando == True:  
+
     if start_game == False:
         
         # tela.fill(BLACK)
@@ -396,15 +395,15 @@ while rodando == True:
         menu_bg.set_alpha(30) #opacidade da tela
         tela.blit(menu_bg, (0,0))
 
-        content_table_menu_bg = pygame.image.load('menu_img\imageBlurMenu.png')
-        content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (1300, 1200))
+        content_table_menu_bg = pygame.image.load('menu_img/ufpe_alagada_ia.png')
+        content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (1300, 1000))
         tela.blit(content_table_menu_bg, (100,-100))
         
         ###Carrega nome do jogo
-        font_title = pygame.font.Font('freesansbold.ttf', 46)
-        text = font_title.render('Após a enchente', True, WHITE, BLACK)
+        font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
+        text = font_title.render('APÓS A ENCHENTE', True, WHITE)
         text_rect_title = text.get_rect()
-        text_rect_title.center = (largura // 2, altura // 2 - 150)
+        text_rect_title.center = (largura // 2, altura // 2 - 130)
         tela.blit(text,text_rect_title)
 
         #Se tiver mostrando a história
@@ -418,7 +417,7 @@ while rodando == True:
             spacing = -95
             for mensagem in mensagens:
                 spacing += 45
-                text = font.render(mensagem, True, WHITE, BLACK)
+                text = font.render(mensagem, True, WHITE)
                 text_rect_description = text.get_rect()
                 text_rect_description.center = (largura // 2, altura // 2 + spacing)
                 tela.blit(text,text_rect_description)
@@ -435,7 +434,7 @@ while rodando == True:
             for mensagem in mensagens.values():
 
                 spacing += 55
-                text = font.render(mensagem[0], True, WHITE, BLACK)
+                text = font.render(mensagem[0], True, WHITE)
                 text_rect_description = text.get_rect()
                 text_rect_description.center = (largura // 2, altura // 2 + spacing)
                 tela.blit(text,text_rect_description)
