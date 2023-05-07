@@ -393,14 +393,11 @@ while rodando == True:
         # tela.fill(BLACK)
 
         ###Carrega imagem de fundo Menu
-        menu_bg = pygame.image.load('menu_img/telaFundoMenu.png')
-        menu_bg = pygame.transform.scale(menu_bg, (largura + 100, altura + 100))
-        menu_bg.set_alpha(30) #opacidade da tela
-        tela.blit(menu_bg, (0,0))
+        
 
         content_table_menu_bg = pygame.image.load('menu_img/ufpe_alagada_ia.png')
-        content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (1300, 1000))
-        tela.blit(content_table_menu_bg, (100,-100))
+        content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (largura + 100, altura + 100))
+        tela.blit(content_table_menu_bg, (0,0))
         
         ###Carrega nome do jogo
         font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
