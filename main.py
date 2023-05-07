@@ -380,7 +380,7 @@ pos_texto = texto.get_rect()
 pos_texto.center = (1300,25)
 
 ###MUSICA#####
-pygame.mixer_music.set_volume(0.3)
+pygame.mixer_music.set_volume(0.0)
 musica_de_fundo =pygame.mixer.music.load('background_music.mp3')
 pygame.mixer.music.play(-1)
 
@@ -389,12 +389,9 @@ showing_game_history = True
 while rodando == True:  
 
     if start_game == False:
-        
-        # tela.fill(BLACK)
 
         ###Carrega imagem de fundo Menu
         
-
         content_table_menu_bg = pygame.image.load('menu_img/ufpe_alagada_ia.png')
         content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (largura + 100, altura + 100))
         tela.blit(content_table_menu_bg, (0,0))
@@ -509,6 +506,9 @@ while rodando == True:
             else:
                 mensagem = 'Se desse mal, parsa'
             
+            pygame.draw.rect(tela, BLACK, pygame.Rect(30, 30, 60, 60))
+            
+
             font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
             text = font_title.render(mensagem, True, WHITE)
             text_rect_title = text.get_rect()
