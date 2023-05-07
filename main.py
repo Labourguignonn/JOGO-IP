@@ -357,7 +357,7 @@ cure_potion_group = pygame.sprite.Group()
 # start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
 start_button = button.Button(largura // 2 - 220, altura // 2 + 100 , start_img, 1)
 tips_button = button.Button(largura // 2 + 20, altura // 2 + 100 , tips_img, 1)
-restart_button = button.Button(largura // 2, altura // 2 + 50 , restart_img, 1)
+restart_button = button.Button(largura // 2 - 100, altura // 2 , restart_img, 1)
 
 #World data
 lista = []
@@ -460,7 +460,7 @@ while rodando == True:
         if start_button.draw(tela):
             start_game = True
     else:
-        inimigos_vivos = len(enemy_group)-2
+        
         imagens()
         world.draw()
         clock.tick(FPS)
@@ -487,6 +487,7 @@ while rodando == True:
         tela.blit(texto,pos_texto)
         ###MUSICA##
 
+        inimigos_vivos = len(enemy_group)-2
 
         if player.alive:
             if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False and player.hurt == False:
@@ -501,8 +502,19 @@ while rodando == True:
 
             scroll = player.move(mover_esquerda,mover_direita) 
             bg_scroll -= scroll
-        else:
+        if not player.alive or not inimigos_vivos:
             scroll = 0
+            if player.alive:
+                mensagem = 'Parabéns, parsa'
+            else:
+                mensagem = 'Se desse mal, parsa'
+            
+            font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
+            text = font_title.render(mensagem, True, WHITE)
+            text_rect_title = text.get_rect()
+            text_rect_title.center = (largura / 2, altura / 2)
+            tela.blit(text,text_rect_title)
+
             if restart_button.draw(tela):
                 bg_scroll = 0
                 lista = reset_level()
