@@ -1,7 +1,6 @@
 import pygame
 from os import listdir
 from os.path import isfile,join
-from funçoes import *
 
 pygame.init()
 #GAME WINDOW
@@ -18,7 +17,6 @@ tela = pygame.display.set_mode((largura, altura + margem))
 #CLASSE PERSONAGEM PRINCIPAL
 class Jogador(pygame.sprite.Sprite):
     GRAVITY = 0.1
-    SPRITES = baixar_sprite("personagem",48,50, True)
     ANIMATION_DELAY = 50
     #INICIO DAS VARIAVEIS PRINCIPAIS
     def __init__(self, char_type, x, y, width, height):
@@ -70,28 +68,6 @@ class Jogador(pygame.sprite.Sprite):
         self.checar_chao(self.y_vel)
         self.fall_count += 0.3
         self.update_sprite()
-
-    def update_sprite(self):
-        if self.ataque:
-            sprite_sheet_name = "Attack" + "_" + self.virar
-            sprites = self.SPRITES[sprite_sheet_name]
-            sprite_index = (self.attack_animation_count // self.ANIMATION_DELAY) % len(sprites)
-            self.sprite = sprites[sprite_index]
-            self.attack_animation_count += 1
-            if self.attack_animation_count >= len(sprites) * self.ANIMATION_DELAY:
-                self.ataque = False
-                self.attack_animation_count = 0
-        else:
-            sprite_sheet = "Idle"
-            if self.x_vel != 0:
-                sprite_sheet = "Walk"
-            sprite_sheet_name = sprite_sheet + "_" + self.virar
-            sprites = self.SPRITES[sprite_sheet_name]
-            sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites)
-            self.sprite = sprites[sprite_index]
-            self.animation_count += 1
-
-        self.update()
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
