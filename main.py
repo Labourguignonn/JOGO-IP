@@ -509,9 +509,9 @@ while rodando == True:
         if not player.alive or not inimigos_vivos:
             scroll = 0
             if player.alive:
-                mensagem = 'Parabéns, parsa'
+                mensagem = 'Parabéns! O CIn está livre de ameaças!'
             else:
-                mensagem = 'Se desse mal, parsa'
+                mensagem = 'Você morreu!'
             
             pygame.draw.rect(tela, BLACK, pygame.Rect(30, 30, 60, 60))
             
