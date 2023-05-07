@@ -3,7 +3,6 @@ import button
 import csv
 from os import listdir
 from os.path import isfile,join
-from jogador import Jogador
 
 pygame.init()
 ############### FABY #############################
@@ -39,7 +38,7 @@ tamanho = altura // rows
 level = 1
 #variaveis grafico
 #QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
-tipo = 9
+tipo = 10
 current_tile = 0
 
 

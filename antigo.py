@@ -3,8 +3,7 @@ import button
 import csv
 import os
 from os.path import isfile,join
-from life import HealthBar
-
+from enemies import enemy
 
 largura = 1500
 altura = 640
@@ -18,7 +17,7 @@ pygame.display.set_caption('Após a enchente')
 ################### LUCAS ###############################
 FPS = 60
 clock = pygame.time.Clock()
-PLAYER_VEL = 4
+PLAYER_VEL = 3
 SCROLL_THRESH = 300
 GRAVITY = 0.1
 
@@ -100,10 +99,8 @@ class World():
                         pass #inimigos
                     if tile == 6:
                         player = Jogador('player', x * tamanho, y *tamanho,PLAYER_VEL,2.50)#tamanhos do personagem(Lucas)
-                        health_bar = HealthBar(10, 10, player.health, player.health)
 
-
-        return player, health_bar
+        return player
     def draw(self):
         for tile in self.lista_obstaculos:
             tile[1][0] += scroll
@@ -131,7 +128,6 @@ class Jogador(pygame.sprite.Sprite):
         self.width = 55
         self.height = 120
         ####
-        self.health = 100
         self.action = 0
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
@@ -171,7 +167,7 @@ class Jogador(pygame.sprite.Sprite):
         #if the animation has run out the reset back to the start
         if self.frame_index >= len(self.animation_list[self.action]):
             if self.action == 3:
-                self.frame_index = len(self.animation_list[self.action]) - 1       
+                self.frame_index = len(self.animation_list[self.action]) - 1
             else:
                 self.frame_index = 0
                 
@@ -203,7 +199,6 @@ class Jogador(pygame.sprite.Sprite):
           self.jump_count = False
           self.fall = True
         
-        
         self.y_vel += GRAVITY
         if self.y_vel > 10:
             self.y_vel
@@ -231,8 +226,6 @@ class Jogador(pygame.sprite.Sprite):
         #check for collision with water
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
-        if self.rect.bottom > altura:
-            self.health = 0
         if self.char_type == 'player':
             if self.rect.left + dx < 0 or self.rect.right + dx > largura + 0:
                 dx = 0
@@ -245,6 +238,11 @@ class Jogador(pygame.sprite.Sprite):
                 self.rect.x -= dx
                 scroll = -dx
         return scroll
+
+
+    def atacar(self):
+        if self.ataque == False:
+            self.ataque = True 
     
     def draw(self):
 	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -275,24 +273,23 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 			lista[x][y] = int(tile)
                         
 world = World()
-player, health_bar =  world.process_data(lista)
-
+player =  world.process_data(lista)
+rato = enemy(1000, 496, 32, 32, 1300)
 rodando = True
 while rodando == True:
     imagens()
     world.draw()
     clock.tick(FPS)
-    health_bar.draw(player.health)
+
     player.update()
     player.draw() 
+    rato.draw(tela)
 
     water_group.update()
     water_group.draw(tela)
     
-    if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False:
+    if (mover_direita or mover_esquerda) and player.fall == False:
         player.update_action(1) #walk
-    elif player.ataque:
-        player.update_action(2) #attack
     else:
         player.update_action(0)#0: idle
 
@@ -314,14 +311,12 @@ while rodando == True:
             if event.key == pygame.K_UP: #pulo do personagem
                 player.jump_count = True
             if event.key == pygame.K_SPACE:
-                player.ataque = True
+                player.atacar()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 mover_esquerda = False
             if event.key == pygame.K_RIGHT:
                 mover_direita = False
-            if event.key == pygame.K_SPACE:
-                player.ataque = False
 
     pygame.display.update()
 
