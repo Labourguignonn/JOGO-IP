@@ -8,7 +8,7 @@ from game_variables import *
 from game_functions import *
 
 pygame.init()
-
+pygame.display.set_caption("APÓS A ENCHENTE")
 class World():
     def __init__(self):
         self.lista_obstaculos = []
