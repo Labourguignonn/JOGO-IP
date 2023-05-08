@@ -5,44 +5,38 @@ import os
 import random
 from os.path import isfile,join
 from life import HealthBar
-
-largura = 1500
-altura = 640
-margem = 100
-margem_lado = 300
-pygame.init()
-############### FABY #############################
-tela = pygame.display.set_mode((largura, altura))
-pygame.display.set_caption('Após a enchente')
+from water import Water
 
 
-################### LUCAS ###############################
+#GENERABLE VARIABLES
 FPS = 60
-clock = pygame.time.Clock()
 PLAYER_VEL = 4
 SCROLL_THRESH = 300
 GRAVITY = 0.1
-start_game = False
-
-############### FABY ####################
-
-esquerda = False
-direita = False
-scroll = 0
 bg_scroll = 0
 scroll = 0
-#variaveis matriz
+start_game = False
+
+#matrix variables
 rows = 16
 colunas_max = 150
-#######TILE SIZE###############
+#tile size
+largura = 1500
+altura = 640
 tamanho = altura // rows
 level = 1
-#variaveis grafico
-#QUANTAS IMAGENS TEM ---  tem que mudar sempre que add alguma imagem
+#grafics variables
 tipo = 10
 current_tile = 0
 mover_esquerda = False
 mover_direita = False
+
+#WINDOW START
+pygame.init()
+tela = pygame.display.set_mode((largura, altura))
+clock = pygame.time.Clock()
+pygame.display.set_caption('Após a enchente')
+
 
 #ADD AS IMAGES
 background = pygame.image.load('Esgoto/sewer.png').convert_alpha()
@@ -55,14 +49,14 @@ for x in range(tipo):
     img_lista.append(img)
 
 ###load botão start##
-start_img = pygame.image.load('botaoStartCanva.png').convert_alpha()
+start_img = pygame.image.load('menu_img/botaoStartCanva.png').convert_alpha()
 start_img = pygame.transform.scale(start_img, (200, 200))
 ###load botão start##
-tips_img = pygame.image.load('botaoMenuCanva.png').convert_alpha()
+tips_img = pygame.image.load('menu_img/botaoMenuCanva.png').convert_alpha()
 tips_img = pygame.transform.scale(tips_img, (200, 200))
 #bg = pygame.image.load('BG.jpg').convert_alpha()
 #bg = pygame.transform.scale(bg, (1000, 580))
-restart_img = pygame.image.load('botaoRestartCanva.png').convert_alpha()
+restart_img = pygame.image.load('menu_img/botaoRestartCanva.png').convert_alpha()
 restart_img = pygame.transform.scale(restart_img, (200, 200))
 
 
@@ -322,15 +316,6 @@ class Jogador(pygame.sprite.Sprite):
     def draw(self):
 	    tela.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
   
-class Water(pygame.sprite.Sprite):
-	def __init__(self, img, x, y):
-		pygame.sprite.Sprite.__init__(self)
-		self.image = img
-		self.rect = self.image.get_rect()
-		self.rect.midtop = (x + tamanho // 2, y + (tamanho - self.image.get_height()))
-
-	def update(self):
-		self.rect.x += scroll
 
 class Potion(pygame.sprite.Sprite):
     def __init__(self,img, x, y):
@@ -374,7 +359,7 @@ with open(f'level{level}_data.csv', newline='') as csvfile:
 world = World()
 player, health_bar,enemy =  world.process_data(lista)
 
-font = pygame.font.Font('Minecraftia-Regular.ttf', 18)
+font = pygame.font.Font('menu_img/Minecraftia-Regular.ttf', 18)
 texto = font.render(f"INIMIGOS RESTANTES: {len(enemy_group)-2}", True, (255,255,255))
 pos_texto = texto.get_rect()
 pos_texto.center = (1300,25)
@@ -397,7 +382,7 @@ while rodando == True:
         tela.blit(content_table_menu_bg, (-200,0))
         
         ###Carrega nome do jogo
-        font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
+        font_title = pygame.font.Font('menu_img/Minecraftia-Regular.ttf', 46)
         text = font_title.render('APÓS A ENCHENTE', True, (172,176,85))
         text_rect_title = text.get_rect()
         text_rect_title.center = (largura // 2  + 300, altura // 2 - 160)
@@ -478,7 +463,7 @@ while rodando == True:
             enemy.draw()
 
 
-        water_group.update()
+        water_group.update(scroll)
         water_group.draw(tela)
 
         cure_potion_group.update()
@@ -516,7 +501,7 @@ while rodando == True:
             pygame.draw.rect(tela, BLACK, pygame.Rect(30, 30, 60, 60))
             
 
-            font_title = pygame.font.Font('Minecraftia-Regular.ttf', 46)
+            font_title = pygame.font.Font('menu_img/Minecraftia-Regular.ttf', 46)
             text = font_title.render(mensagem, True, WHITE)
             text_rect_title = text.get_rect()
             text_rect_title.center = (largura / 2, altura / 2)
