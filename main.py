@@ -12,6 +12,7 @@ pygame.init()
 class World():
     def __init__(self):
         self.lista_obstaculos = []
+    
     #ASSOCIAR OS TILES AS CLASSES
     def process_data(self, data):
         self.level_length = len(data[0])
