@@ -1,93 +1,18 @@
 import pygame
-import button
 import csv
 import os
-import random
 from os.path import isfile,join
 from life import HealthBar
 from water import Water
+from game_variables import *
+from game_functions import *
 
-
-#GENERABLE VARIABLES
-FPS = 60
-PLAYER_VEL = 4
-SCROLL_THRESH = 300
-GRAVITY = 0.1
-bg_scroll = 0
-scroll = 0
-start_game = False
-
-#matrix variables
-rows = 16
-colunas_max = 150
-#tile size
-largura = 1500
-altura = 640
-tamanho = altura // rows
-level = 1
-#grafics variables
-tipo = 10
-current_tile = 0
-mover_esquerda = False
-mover_direita = False
-
-#WINDOW START
 pygame.init()
-tela = pygame.display.set_mode((largura, altura))
-clock = pygame.time.Clock()
-pygame.display.set_caption('Após a enchente')
-
-
-#ADD AS IMAGES
-background = pygame.image.load('Esgoto/sewer.png').convert_alpha()
-background = pygame.transform.scale(background, (largura,altura))
-img_lista = []
-for x in range(tipo):
-    #ADIÇÃO DAS IMAGENS NO INVENTARIO
-    img = pygame.image.load(f'img/{x}.png').convert_alpha()
-    img = pygame.transform.scale(img, (tamanho, tamanho))
-    img_lista.append(img)
-
-###load botão start##
-start_img = pygame.image.load('menu_img/botaoStartCanva.png').convert_alpha()
-start_img = pygame.transform.scale(start_img, (200, 200))
-###load botão start##
-tips_img = pygame.image.load('menu_img/botaoMenuCanva.png').convert_alpha()
-tips_img = pygame.transform.scale(tips_img, (200, 200))
-#bg = pygame.image.load('BG.jpg').convert_alpha()
-#bg = pygame.transform.scale(bg, (1000, 580))
-restart_img = pygame.image.load('menu_img/botaoRestartCanva.png').convert_alpha()
-restart_img = pygame.transform.scale(restart_img, (200, 200))
-
-
-#DEFINIR CORES 
-BLACK = (0, 0, 0)
-WHITE = (250, 250, 250)
-GREEN = (144, 201, 120)
-
-
-
-def imagens():
-    tela.fill(WHITE)
-    width = tela.get_width()
-    #quantas vezes a imagem repete 
-    for x in range(4):
-        tela.blit(background,((x*width) - bg_scroll*0.7, 0)) ##0.7 == velocidade que move a tela
-
-def reset_level():
-    water_group.empty()
-    enemy_group.empty()
-    cure_potion_group.empty()
-    data = []
-    for row in range(rows):
-        r = [-1]*colunas_max
-        data.append(r)
-
-    return data
 
 class World():
     def __init__(self):
         self.lista_obstaculos = []
+    #ASSOCIAR OS TILES AS CLASSES
     def process_data(self, data):
         self.level_length = len(data[0])
         for y, row in enumerate(data):
@@ -119,6 +44,7 @@ class World():
             tile[1][0] += scroll
             tela.blit(tile[0], tile[1])
 
+
 class Jogador(pygame.sprite.Sprite):
     PLAYER_VEL = 1
     #INICIO DAS VARIAVEIS PRINCIPAIS
@@ -126,28 +52,26 @@ class Jogador(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.alive = True
         self.char_type = char_type
-        ##self speed
+        # Velocidade do personagem
         self.x_vel = vel
         self.y_vel = 0
-        ####EDICOES####
+        # Fatores auxiliares
         self.hit = False
         self.damage_timer = 1000
         self.tempo = 0
         self.hurt = False
-        ########
         self.mask = None
-        #####
         self.animation_list = []
-        #mudanca 
+        # Mudança 
         self.flip = False
         self.virar = 1
-        #####
+        # Ações
         self.fall = False
         self.jump_count = False
         self.ataque = False
         self.width = 55
         self.height = 120
-        ####
+        # Atributos
         self.health = 100
         self.max_health = 100
         self.action = 0
@@ -157,12 +81,12 @@ class Jogador(pygame.sprite.Sprite):
         self.idling = False
         self.idling_counter = 0
 
-###CARREGAR IMAGENS DO PERSONAGEM#######
+    ###CARREGAR IMAGENS DO PERSONAGEM#######
         animações_personagem = ['Idle', 'Walk', 'Attack', 'Death', 'Hurt']
         for animation in animações_personagem:
-            #reset temporary list of images
+            # Resetar lista temporária de imagens
             temp_list = []
-            #count number of files in the folder
+            # Contar número de arquivos na pasta
             numero_frames = len(os.listdir(f'img/{self.char_type}/{animation}'))
             for i in range(numero_frames):
                 img = pygame.image.load(f'img/{self.char_type}/{animation}/{i}.png').convert_alpha()
@@ -183,15 +107,15 @@ class Jogador(pygame.sprite.Sprite):
 
 
     def update_animation(self):
-        #update animation
+        # variável de delay da animação
         ANIMATION_DELAY = 100
-        #update image depending on current frame
+        # atualizar a imagem dependendo do frame atual
         self.image = self.animation_list[self.action][self.frame_index]
-        #check if enough time has passed since the last update
+        # checar se tempo o bastante passou desde o último update
         if pygame.time.get_ticks() - self.update_time > ANIMATION_DELAY:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
-        #if the animation has run out the reset back to the start
+        #se acabar a animação, voltar para a primeira da sequência
         if self.frame_index >= len(self.animation_list[self.action]):
             if self.action == 3:
                 self.frame_index = len(self.animation_list[self.action]) - 1       
@@ -199,15 +123,15 @@ class Jogador(pygame.sprite.Sprite):
                 self.frame_index = 0
                 
     def update_action(self, new_action):
-        #check if the new action is different to the previous one
+        #checar se nova ação é diferente da última
         if new_action != self.action:
             self.action = new_action
-            #update the animation settings
+            # atualizar
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
 
 
-    #FUNCAO SOMA A VEL NA POSICAO PRA ANDAR
+    #MOVIMENTO DO PERSONAGEM E COLISÕES
     def move(self, mover_esquerda,mover_direita):
         dx = 0
         dy = self.y_vel
@@ -233,28 +157,29 @@ class Jogador(pygame.sprite.Sprite):
         dy += self.y_vel
     
 
-        #check for collision
+        #CHECAR COLISÃO(x,y)
         scroll = 0
         for tile in world.lista_obstaculos:
-            #check collision in the x direction
+            #checar colisão na direção horizontal
             if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
                 dx = 0  
-            
+            ##checar colisão na direção vertical##
             if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                    #check if below the ground, i.e. jumping
+                #checar a colisão com blocos acima
                 if self.y_vel < 0:
                     self.y_vel = 0
                     dy = tile[1].bottom - self.rect.top
-                #check if above the ground, i.e. falling
+                #checar colisão com chão abaixo
                 elif self.y_vel >= 0:
                     self.y_vel = 0
                     self.fall = False
                     self.jump_count = False
                     dy = tile[1].top - self.rect.bottom
-        #check for collision with water
+        ##checar colisão com a água##
         if pygame.sprite.spritecollide(self, water_group, False):
             self.health = 0
-
+        
+        #checar colisão com inimigo
         if pygame.sprite.spritecollideany(player, enemy_group): 
                 enemy = pygame.sprite.spritecollideany(player, enemy_group) 
                 if player.ataque == True and enemy.alive: 
@@ -273,7 +198,7 @@ class Jogador(pygame.sprite.Sprite):
         else:
             self.hurt = False
 
-        #se cair em um buraco
+        # se cair em um buraco
         if self.rect.bottom > altura:
             self.health = 0
                         
@@ -282,14 +207,15 @@ class Jogador(pygame.sprite.Sprite):
                 dx = 0
         self.rect.x += dx
         self.rect.y += dy
-        #update scroll based on player position
+        # update scroll based on player position
         if self.char_type == 'player':
             if (self.rect.right > largura - SCROLL_THRESH and bg_scroll < (world.level_length * tamanho) - largura) or (self.rect.left < SCROLL_THRESH and bg_scroll > abs(dx)):
                 self.rect.x -= dx
                 scroll = -dx
             
         return scroll
-
+    
+    #CRIAÇÃO DO INIMIGO
     def enemy_move(self): 
         if self.alive and player.alive: 
             if self.virar == 1:
@@ -333,42 +259,10 @@ class Potion(pygame.sprite.Sprite):
                     player.health = player.max_health
                 self.kill()
 
-#CRIAR GROUPS
-water_group = pygame.sprite.Group()
-enemy_group = pygame.sprite.Group()
-cure_potion_group = pygame.sprite.Group()
 
-#criar botões
-# start_button = button.Button(largura // 2 - 100, altura // 2 + 150 , start_img, 1)
-start_button = button.Button(largura // 2 + 70, altura // 2 + 150 , start_img, 1)
-tips_button = button.Button(largura // 2 + 310, altura // 2 + 150 , tips_img, 1)
-restart_button = button.Button(largura // 2 - 100, altura // 2 , restart_img, 1)
 
-#World data
-lista = []
-for row in range(rows):
-    r = [-1]*colunas_max
-    lista.append(r)
-#load in level data and create world
-with open(f'level{level}_data.csv', newline='') as csvfile:
-	reader = csv.reader(csvfile, delimiter=',')
-	for x, row in enumerate(reader):
-		for y, tile in enumerate(row):
-			lista[x][y] = int(tile)
-                        
 world = World()
 player, health_bar,enemy =  world.process_data(lista)
-
-font = pygame.font.Font('menu_img/Minecraftia-Regular.ttf', 18)
-texto = font.render(f"INIMIGOS RESTANTES: {len(enemy_group)-2}", True, (255,255,255))
-pos_texto = texto.get_rect()
-pos_texto.center = (1300,25)
-
-###MUSICA#####
-pygame.mixer_music.set_volume(0.0)
-musica_de_fundo =pygame.mixer.music.load('background_music.mp3')
-pygame.mixer.music.play(-1)
-
 rodando = True
 showing_game_history = True
 while rodando == True:  
@@ -376,70 +270,8 @@ while rodando == True:
     if start_game == False:
 
         ###Carrega imagem de fundo Menu
-        
-        content_table_menu_bg = pygame.image.load('menu_img/fundo_menu.png')
-        content_table_menu_bg = pygame.transform.scale(content_table_menu_bg, (largura + 300, altura + 100))
-        tela.blit(content_table_menu_bg, (-200,0))
-        
-        ###Carrega nome do jogo
-        font_title = pygame.font.Font('menu_img/Minecraftia-Regular.ttf', 46)
-        text = font_title.render('APÓS A ENCHENTE', True, (172,176,85))
-        text_rect_title = text.get_rect()
-        text_rect_title.center = (largura // 2  + 300, altura // 2 - 160)
-        tela.blit(text,text_rect_title)
-
-        #Se tiver mostrando a história
-        if showing_game_history == True:
-            mensagens = [
-                'Durante um período de chuva muito forte em Recife',
-                'a UFPE sofreu um perigoso alagamento!',
-                'Era tudo o que a legião de ratos escondidos nos',
-                'esgotos do CIn precisava para invadir e sequestrar',
-                'a tia Edilene a fim de conseguir acesso a todo o CIn',
-                'Ajude Lucas a matar o máximo de ratos no subsolo do',
-                'Centro de Informática'
-            ]
-            spacing = -135
-            for mensagem in mensagens:
-                spacing += 45
-                text = font.render(mensagem, True, WHITE)
-                text_rect_description = text.get_rect()
-                text_rect_description.center = (largura // 2 + 300, altura // 2 + spacing)
-                tela.blit(text,text_rect_description)
-        else:
-            
-            mensagens = {
-                '0':('Água de Leptospirose é morte instantânea!', 'aguaVenenosa', (1300, 225), (750, 225)),
-                '1':('Movimentação e ataque em            + espaço', 'setasTeclado', (1120,275)),
-                '2':('Ache a poção e recupere vida!', 'potion', (1210,333), (835, 333)),
-                '4':('FIQUE ATENTO À SUA HEALTH BAR E BOA SORTE NO ESGOTO, GUERREIRO!', 'idlePerson')
-            }
-            
-            spacing = -125
-            for mensagem in mensagens.values():
-                color = WHITE
-                if mensagem[1] == 'idlePerson':
-                    color = (172,176,85)
-
-                spacing += 55
-                text = font.render(mensagem[0], True, color)
-                text_rect_description = text.get_rect()
-                text_rect_description.center = (largura // 2 + 300, altura // 2 + spacing)
-                tela.blit(text,text_rect_description)
-
-                try:
-                    #carrega imagem
-                    img_menu = pygame.image.load(f'menu_img/{mensagem[1]}.png').convert_alpha()
-                    img_menu = pygame.transform.scale(img_menu, (50, 50))
-                    tela.blit(img_menu, mensagem[2])
-
-                
-                    rotated_img = pygame.transform.flip(img_menu, True, False)
-                    tela.blit(rotated_img, mensagem[3])
-                except:
-                    pass
-                
-            
+        menu_inicial(showing_game_history)
+                   
         if showing_game_history == True and  tips_button.draw(tela):
             showing_game_history = False
 
@@ -450,33 +282,38 @@ while rodando == True:
             start_game = True
     else:
         
-        imagens()
+        imagens(tela)
         world.draw()
         clock.tick(FPS)
+        
+        ## UPDATES E DRAWS DE CLASSES E GRUPOS ##
+        # health bar
         health_bar.draw(player.health)
+        
+        # player
         player.update()
         player.draw() 
-
+        
+        # enemy
         for enemy in enemy_group:
             enemy.update()
             enemy.enemy_move()
             enemy.draw()
 
-
+        # water group
         water_group.update(scroll)
         water_group.draw(tela)
-
+        
+        # cure potion
         cure_potion_group.update()
         cure_potion_group.draw(tela)
+        
         ##TEXTO##
         inimigos_vivos = len(enemy_group)-2
         texto = font.render(f"INIMIGOS RESTANTES: {inimigos_vivos}", True, (255,255,255))
         pos_texto = texto.get_rect()
         pos_texto.center = (1300,25)
         tela.blit(texto,pos_texto)
-        ###MUSICA##
-
-        inimigos_vivos = len(enemy_group)-2
 
         if player.alive:
             if (mover_direita or mover_esquerda) and player.fall == False and player.ataque == False and player.hurt == False:
@@ -488,15 +325,15 @@ while rodando == True:
             else:
                 player.update_action(0)#0: idle
 
-
             scroll = player.move(mover_esquerda,mover_direita) 
             bg_scroll -= scroll
+        
         if not player.alive or not inimigos_vivos:
             scroll = 0
             if player.alive:
-                mensagem = 'Parabéns! O CIn está livre de ameaças!'
+                mensagem = 'Parabéns! O CIn está livre de ameaças e você salvou a tia Edilene'
             else:
-                mensagem = 'Você morreu!'
+                mensagem = 'Foi de arrasta pra cima!!!'
             
             pygame.draw.rect(tela, BLACK, pygame.Rect(30, 30, 60, 60))
             
@@ -518,11 +355,12 @@ while rodando == True:
                             lista[x][y] = int(tile)
                 world = World()
                 player, health_bar,enemy =  world.process_data(lista)
+        
         #MOVER A TELA 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             rodando = False 
-        #pressionar teclas
+        # pressionar teclas
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 mover_esquerda = True
